@@ -10,7 +10,6 @@ import * as z from "zod";
 
 const schema = z.object({
   name: z.string().min(1, "Nama lokasi wajib diisi"),
-  address: z.string().min(1, "Alamat wajib diisi"),
   status: z.enum(["active", "inactive"]).default("active"),
 });
 
@@ -32,13 +31,13 @@ export default function Placements() {
 
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ name: "", address: "", status: "active" });
+    reset({ name: "", status: "active" });
     setIsModalOpen(true);
   };
 
   const onEdit = (item) => {
     setSelectedItem(item);
-    reset({ name: item.name, address: item.address, status: item.status });
+    reset({ name: item.name, status: item.status });
     setIsModalOpen(true);
   };
 
@@ -62,7 +61,6 @@ export default function Placements() {
         </div>
       ),
     },
-    { header: "Alamat", accessorKey: "address", className: "text-muted-foreground" },
     {
       header: "Status",
       cell: (row) => (
@@ -117,15 +115,6 @@ export default function Placements() {
               placeholder="Contoh: Kantor Pusat Jakarta"
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Alamat</label>
-            <textarea
-              {...register("address")}
-              className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              placeholder="Masukkan alamat lengkap lokasi..."
-            />
-            {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Status</label>

@@ -3,20 +3,26 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, UserCheck } from "lucide-react";
+import { Edit2, Trash2, UserCheck, Calendar, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/api/axios";
+import { format } from "date-fns";
 
 const schema = z.object({
-  full_name: z.string().min(1, "Nama lengkap wajib diisi"),
-  employee_id_number: z.string().min(1, "NIP/NIK wajib diisi"),
-  email: z.string().email("Email tidak valid").optional(),
-  status: z.enum(["active", "inactive"]).default("active"),
+  intern_id: z.string().min(1, "Peserta magang wajib dipilih"),
+  user_id: z.string().min(1, "Mentor wajib dipilih"),
+  assigned_date: z.string().min(1, "Tanggal penugasan wajib diisi"),
+  notes: z.string().optional(),
 });
 
 export default function MentorInterns() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/mentor-interns", "mentor-interns");
+
+  const { data: interns } = useQuery({ queryKey: ["interns-all"], queryFn: async () => (await api.get("/master/interns/all")).data.data });
+  const { data: mentors } = useQuery({ queryKey: ["users-all"], queryFn: async () => (await api.get("/master/users/all")).data.data });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -33,58 +39,60 @@ export default function MentorInterns() {
 
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ full_name: "", employee_id_number: "", email: "", status: "active" });
+    reset({ intern_id: "", user_id: "", assigned_date: format(new Date(), "yyyy-MM-dd"), notes: "" });
     setIsModalOpen(true);
   };
 
   const onEdit = (item) => {
     setSelectedItem(item);
     reset({
-      full_name: item.full_name,
-      employee_id_number: item.employee_id_number,
-      email: item.email || "",
-      status: item.status,
+      intern_id: item.intern_id,
+      user_id: item.user_id,
+      assigned_date: item.assigned_date ? format(new Date(item.assigned_date), "yyyy-MM-dd") : "",
+      notes: item.notes || "",
     });
     setIsModalOpen(true);
   };
 
   const onSubmit = (formData) => {
     if (selectedItem) {
-      updateMutation.mutate(
-        { id: selectedItem.id, updatedData: formData },
-        {
-          onSuccess: () => setIsModalOpen(false),
-        },
-      );
+      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { onSuccess: () => setIsModalOpen(false) });
     } else {
-      createMutation.mutate(formData, {
-        onSuccess: () => setIsModalOpen(false),
-      });
+      createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
     }
   };
 
   const columns = [
     {
-      header: "Nama Mentor",
+      header: "Peserta Magang",
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-500">
             <UserCheck size={16} />
           </div>
           <div>
-            <p className="font-bold">{row.full_name}</p>
-            <p className="text-xs text-muted-foreground">NIP: {row.employee_id_number}</p>
+            <p className="font-bold">{row.intern?.name || "N/A"}</p>
+            <p className="text-xs text-muted-foreground">{row.intern?.university || "-"}</p>
           </div>
         </div>
       ),
     },
-    { header: "Email", accessorKey: "email", className: "text-muted-foreground" },
     {
-      header: "Status",
+      header: "Mentor Penanggung Jawab",
       cell: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.status === "active" ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
-          {row.status === "active" ? "Aktif" : "Tidak Aktif"}
-        </span>
+        <div>
+          <p className="font-semibold">{row.mentor?.full_name || row.mentor?.fullname || "N/A"}</p>
+          <p className="text-xs text-muted-foreground">{row.mentor?.role || "Mentor"}</p>
+        </div>
+      ),
+    },
+    {
+      header: "Tanggal Penugasan",
+      cell: (row) => (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar size={12} />
+          {row.assigned_date ? format(new Date(row.assigned_date), "dd MMM yyyy") : "-"}
+        </div>
       ),
     },
     {
@@ -112,8 +120,8 @@ export default function MentorInterns() {
   return (
     <>
       <DataTable
-        title="Daftar Mentor"
-        description="Kelola data pembimbing lapangan untuk peserta magang."
+        title="Penugasan Mentor"
+        description="Hubungkan peserta magang dengan pembimbing lapangan yang sesuai."
         columns={columns}
         data={data}
         isLoading={isLoading}
@@ -123,28 +131,56 @@ export default function MentorInterns() {
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
       />
 
-      <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedItem ? "Edit Mentor" : "Tambah Mentor"} onSubmit={handleSubmit(onSubmit)} isLoading={createMutation.isLoading || updateMutation.isLoading}>
+      <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedItem ? "Edit Penugasan" : "Tambah Penugasan"} onSubmit={handleSubmit(onSubmit)} isLoading={createMutation.isLoading || updateMutation.isLoading}>
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Nama Lengkap</label>
-            <input {...register("full_name")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
-            {errors.full_name && <p className="text-xs text-destructive">{errors.full_name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">NIP / Nomor Pegawai</label>
-            <input {...register("employee_id_number")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
-            {errors.employee_id_number && <p className="text-xs text-destructive">{errors.employee_id_number.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email (Opsional)</label>
-            <input type="email" {...register("email")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Status</label>
-            <select {...register("status")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value="active">Aktif</option>
-              <option value="inactive">Tidak Aktif</option>
+            <label className="text-sm font-medium">Peserta Magang</label>
+            <select {...register("intern_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+              <option value="">Pilih Peserta</option>
+              {interns?.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name} ({i.university})
+                </option>
+              ))}
             </select>
+            {errors.intern_id && <p className="text-xs text-destructive">{errors.intern_id.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Mentor</label>
+            <select {...register("user_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+              <option value="">Pilih Mentor</option>
+              {mentors?.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.fullname || m.full_name}
+                </option>
+              ))}
+            </select>
+            {errors.user_id && <p className="text-xs text-destructive">{errors.user_id.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tanggal Penugasan</label>
+            <div className="relative">
+              <input
+                type="date"
+                {...register("assigned_date")}
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+              />
+              <Calendar className="absolute right-3 top-3 text-muted-foreground" size={18} />
+            </div>
+            {errors.assigned_date && <p className="text-xs text-destructive">{errors.assigned_date.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <FileText size={14} /> Catatan (Opsional)
+            </label>
+            <textarea
+              {...register("notes")}
+              className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+              placeholder="Catatan tugas atau instruksi khusus..."
+            />
           </div>
         </div>
       </FormModal>
