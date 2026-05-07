@@ -1,37 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { LayoutDashboard, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, FileText, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import api from "@/api/axios";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
-  { icon: Building2, label: "Divisi", path: "/master/divisions" },
-  { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods" },
-  { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs" },
-  { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses" },
-  { icon: MapPin, label: "Penempatan", path: "/master/placements" },
-  { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations" },
-  { icon: Users, label: "Peserta Magang", path: "/master/interns" },
-  { icon: CheckCircle2, label: "Mentor", path: "/master/mentor-interns" },
-  { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria" },
-  { icon: Award, label: "Penilaian", path: "/master/scores" },
-  { icon: FileText, label: "Jenis Laporan", path: "/master/report-types" },
-  { icon: FileBarChart, label: "Laporan", path: "/master/reports" },
-  { icon: FileBarChart, label: "Log Book", path: "/master/log-books" },
-];
+    { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
+    { icon: Briefcase, label: "Lamar Magang", path: "/apply", role: ["student", "Intern"] },
+    { icon: Building2, label: "Divisi", path: "/master/divisions", adminOnly: true },
+    { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods", adminOnly: true },
+    { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs", adminOnly: true },
+    { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses", adminOnly: true },
+    { icon: MapPin, label: "Penempatan", path: "/master/placements", adminOnly: true },
+    { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations", adminOnly: true },
+    { icon: Users, label: "Peserta Magang", path: "/master/interns", adminOnly: true },
+    { icon: CheckCircle2, label: "Mentor", path: "/master/mentor-interns", adminOnly: true },
+    { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", adminOnly: true },
+    { icon: Award, label: "Penilaian", path: "/master/scores", adminOnly: true },
+    { icon: FileText, label: "Jenis Laporan", path: "/master/report-types", adminOnly: true },
+    { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports" },
+    { icon: FileBarChart, label: "Log Book", path: "/master/log-books" },
+  ];
 
 export default function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
+
+  // Ambil data terbaru user saat dashboard dimuat
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const response = await api.get("/auth/me");
+        setUser(response.data.data);
+      } catch (err) {
+        console.error("Gagal refresh profil", err);
+      }
+    };
+    fetchMe();
+  }, [setUser]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
+  const filteredMenuItems = menuItems.filter(item => {
+    const userRole = user?.role?.toLowerCase();
+    // Jika menu khusus admin, sembunyikan dari student/intern
+    if (item.adminOnly && (userRole === 'student' || userRole === 'intern')) return false;
+    // Jika menu khusus role tertentu, cek apakah role user cocok
+    if (item.role && !item.role.some(r => r.toLowerCase() === userRole)) return false;
+    
+    // Jika menu "Lamar Magang", sembunyikan kalau sudah diterima (jadi intern)
+    if (item.path === "/apply") {
+      if (userRole === 'intern' || user?.registration?.status?.toLowerCase() === 'accepted' || user?.registration?.intern_id) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -68,14 +100,20 @@ export default function DashboardLayout() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           {isSidebarOpen ? (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Briefcase className="text-primary-foreground w-5 h-5" />
-              </div>
+              <img 
+                src="/logo rapier.jpg" 
+                alt="Rapier Technology" 
+                className="w-16 h-16 object-contain rounded-lg"
+              />
               <span className="font-bold text-lg tracking-tight">Magang Hub</span>
             </div>
           ) : (
-            <div className="w-10 h-10 mx-auto bg-primary rounded-lg flex items-center justify-center">
-              <Briefcase className="text-primary-foreground w-6 h-6" />
+            <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center">
+              <img 
+                src="/logo-rapier.png" 
+                alt="Logo" 
+                className="w-12 h-12 object-contain"
+              />
             </div>
           )}
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
@@ -84,7 +122,7 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link

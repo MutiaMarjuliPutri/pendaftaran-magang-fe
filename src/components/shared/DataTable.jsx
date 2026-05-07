@@ -7,7 +7,8 @@ import {
   Search,
   Plus,
   Loader2,
-  Filter
+  Filter,
+  Layers
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,8 +21,12 @@ export default function DataTable({
   pagination, 
   onPageChange,
   title,
-  description
+  description,
+  children,
+  groupByKey
 }) {
+  let lastGroupValue = null;
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -50,6 +55,8 @@ export default function DataTable({
           )}
         </div>
       </div>
+
+      {children}
 
       <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -80,15 +87,42 @@ export default function DataTable({
                   </td>
                 </tr>
               ) : (
-                data.map((row, rowIndex) => (
-                  <tr key={row.id || rowIndex} className="hover:bg-muted/30 transition-colors group">
-                    {columns.map((col, colIndex) => (
-                      <td key={colIndex} className={cn("px-6 py-4", col.className)}>
-                        {col.cell ? col.cell(row) : row[col.accessorKey]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                data.map((row, rowIndex) => {
+                  const currentGroupValue = groupByKey ? row[groupByKey] : null;
+                  const showSeparator = groupByKey && currentGroupValue !== lastGroupValue;
+                  lastGroupValue = currentGroupValue;
+
+                  return (
+                    <React.Fragment key={row.id || rowIndex}>
+                      {showSeparator && (
+                        <tr className="bg-red-50/30 select-none">
+                          <td colSpan={columns.length} className="px-0 py-0">
+                            <div className="flex items-center bg-gradient-to-r from-red-900/10 via-red-900/5 to-transparent px-6 py-3 border-y border-red-900/10">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-red-900/20 flex items-center justify-center text-red-900 shadow-sm border border-red-900/20">
+                                  <Layers size={14} />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-extrabold text-red-900">
+                                    {groupByKey.charAt(0).toUpperCase() + groupByKey.slice(1)} {currentGroupValue || "Lainnya"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="ml-8 flex-1 h-[1px] bg-gradient-to-r from-red-900/20 to-transparent"></div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      <tr className="hover:bg-muted/30 transition-colors group">
+                        {columns.map((col, colIndex) => (
+                          <td key={colIndex} className={cn("px-6 py-4", col.className)}>
+                            {col.cell ? col.cell(row) : row[col.accessorKey]}
+                          </td>
+                        ))}
+                      </tr>
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

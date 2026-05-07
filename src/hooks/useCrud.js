@@ -48,10 +48,13 @@ export function useCrud(modulePath, queryKey) {
     },
   });
 
+  const rows = data?.data?.rows || (Array.isArray(data?.data) ? data.data : []);
+  const total = data?.data?.count || data?.metadata?.total_row || 0;
+
   return {
-    data: data?.data || [],
+    data: rows,
     pagination: {
-      total: data?.metadata?.total_row || 0,
+      total: total,
       page: params.page,
       perPage: params.per_page,
     },

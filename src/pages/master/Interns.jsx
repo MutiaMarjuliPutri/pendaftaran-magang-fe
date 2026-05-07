@@ -16,6 +16,7 @@ const schema = z.object({
   major: z.string().min(1, "Jurusan wajib diisi"),
   semester: z.coerce.number().min(1).max(14).optional(),
   status: z.enum(["active", "inactive", "graduated", "dropped"]).default("active"),
+  batch: z.coerce.number().min(1).max(9).optional(),
 });
 
 export default function Interns() {
@@ -39,7 +40,7 @@ export default function Interns() {
 
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ name: "", email: "", phone: "", university: "", major: "", semester: 1, status: "active" });
+    reset({ name: "", email: "", phone: "", university: "", major: "", semester: 1, status: "active", batch: 1 });
     setIsModalOpen(true);
   };
 
@@ -53,6 +54,7 @@ export default function Interns() {
       major: item.major,
       semester: item.semester,
       status: item.status,
+      batch: item.batch,
     });
     setIsModalOpen(true);
   };
@@ -75,6 +77,17 @@ export default function Interns() {
         </div>
       ),
       className: "font-semibold",
+    },
+    {
+      header: "Batch",
+      cell: (row) => (
+        <div className="flex items-center justify-center">
+          <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
+            Batch {row.batch || "-"}
+          </span>
+        </div>
+      ),
+      className: "text-center",
     },
     {
       header: "Kontak",
@@ -111,7 +124,7 @@ export default function Interns() {
           graduated: "bg-blue-500/10 text-blue-500",
           dropped: "bg-destructive/10 text-destructive",
         };
-        return <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusColors[row.status]}`}>{row.status}</span>;
+        return <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase text-center ${statusColors[row.status]}`}>{row.status}</span>;
       },
     },
     {
@@ -148,7 +161,20 @@ export default function Interns() {
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
-      />
+        groupByKey="batch"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <select 
+            onChange={(e) => setParams(prev => ({ ...prev, batch: e.target.value, page: 1 }))}
+            className="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Semua Batch</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(b => (
+              <option key={b} value={b}>Batch {b}</option>
+            ))}
+          </select>
+        </div>
+      </DataTable>
 
       <FormModal
         isOpen={isModalOpen}
@@ -197,14 +223,25 @@ export default function Interns() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <select {...register("status")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-                <option value="active">Aktif</option>
-                <option value="inactive">Tidak Aktif</option>
-                <option value="graduated">Lulus</option>
-                <option value="dropped">Dikeluarkan</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <select {...register("status")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Tidak Aktif</option>
+                  <option value="graduated">Lulus</option>
+                  <option value="dropped">Dikeluarkan</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batch</label>
+                <select {...register("batch")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((b) => (
+                    <option key={b} value={b}>Batch {b}</option>
+                  ))}
+                </select>
+                {errors.batch && <p className="text-xs text-destructive">{errors.batch.message}</p>}
+              </div>
             </div>
           </div>
         </div>

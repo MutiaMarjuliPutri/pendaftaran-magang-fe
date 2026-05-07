@@ -1,0 +1,686 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SocialIcon } from 'react-social-icons';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Calendar,
+  Briefcase,
+  Users,
+  Building2,
+  ExternalLink,
+  ChevronRight,
+  MapPin,
+  Mail
+} from 'lucide-react';
+import api from '@/api/axios';
+
+export default function Home() {
+  const navigate = useNavigate();
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Status pendaftaran: 'open', 'closed', 'announced'
+  const [periodStatus, setPeriodStatus] = useState('announced');
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [acceptedInterns, setAcceptedInterns] = useState([]);
+  const [isLoadingAnnouncement, setIsLoadingAnnouncement] = useState(false);
+
+  const fetchAnnouncement = async () => {
+    setIsAnnouncementModalOpen(true);
+    setIsLoadingAnnouncement(true);
+    try {
+      const response = await api.get('/master/interns?limit=100');
+      setAcceptedInterns(response.data.data);
+    } catch (error) {
+      console.error("Gagal mengambil data pengumuman", error);
+    } finally {
+      setIsLoadingAnnouncement(false);
+    }
+  };
+
+  const openModal = (program) => {
+    setSelectedProgram(program);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedProgram(null);
+  };
+
+  // Data program magang LENGKAP 5 POSISI
+  const programs = [
+    {
+      id: 1,
+      program_code: "FRONT-001",
+      program_name: "Frontend Developer",
+      description: "Belajar membangun antarmuka web modern menggunakan React.js, Tailwind CSS, dan mengintegrasikan dengan REST API.",
+      quota: 10,
+      registration_start: "2025-11-10",
+      registration_end: "2025-11-30"
+    },
+    {
+      id: 2,
+      program_code: "BACK-001",
+      program_name: "Backend Developer",
+      description: "Pelajari pengembangan backend dengan Node.js, Express, dan database SQL. Bangun API yang handal dan scalable.",
+      quota: 8,
+      registration_start: "2025-11-10",
+      registration_end: "2025-11-30"
+    },
+    {
+      id: 3,
+      program_code: "UIUX-001",
+      program_name: "UI/UX Designer",
+      description: "Kuasai desain antarmuka pengguna, user research, prototyping dengan Figma, dan menciptakan pengalaman digital yang menarik.",
+      quota: 5,
+      registration_start: "2025-11-10",
+      registration_end: "2025-11-30"
+    },
+    {
+      id: 4,
+      program_code: "BA-001",
+      program_name: "Business Analyst",
+      description: "Pelajari analisis kebutuhan bisnis, pembuatan dokumentasi, dan kolaborasi dengan tim developer untuk menghasilkan solusi tepat guna.",
+      quota: 6,
+      registration_start: "2025-11-10",
+      registration_end: "2025-11-30"
+    },
+    {
+      id: 5,
+      program_code: "QA-001",
+      program_name: "Quality Assurance",
+      description: "Pelajari proses testing, manual testing, automation testing, dan memastikan kualitas aplikasi sebelum dirilis ke pengguna.",
+      quota: 7,
+      registration_start: "2025-11-10",
+      registration_end: "2025-11-30"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background font-sans">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+              <Briefcase className="text-white w-5 h-5" />
+            </div>
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Rapier Intern
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => navigate('/login')}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="px-5 py-2 rounded-full bg-red-900 text-white text-sm font-semibold hover:bg-red-950 transition-all shadow-lg shadow-red-900/20 active:scale-95"
+            >
+              Lamar Sekarang
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          {periodStatus === 'open' && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              Pendaftaran Magang Periode 2026 Dibuka
+            </div>
+          )}
+
+          {periodStatus === 'closed' && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-sm font-semibold mb-8">
+              Pendaftaran Magang Periode 2026 Ditutup
+            </div>
+          )}
+
+          {periodStatus === 'announced' && (
+            <button
+              onClick={fetchAnnouncement}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-100 border border-green-300 text-green-700 text-sm font-bold mb-8 hover:bg-green-200 hover:scale-105 transition-all shadow-xl shadow-green-100/50 cursor-pointer animate-bounce"
+            >
+              🎉 Pengumuman Peserta Magang Diterima! Klik Disini
+            </button>
+          )}
+
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground mb-6 leading-tight">
+            Mulai Karir Profesional <br />
+            <span className="text-primary">Bersama Kami</span>
+          </h1>
+
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+            Dapatkan pengalaman kerja nyata dan bimbingan langsung dari para profesional di industri teknologi. Program magang kami dirancang untuk mengasah skill teknis dan softskill Anda.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => {
+                document.getElementById('programs').scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-8 py-4 rounded-2xl bg-primary text-white font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 flex items-center gap-2 group"
+            >
+              Lihat Program <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <a
+              href="https://rapiertechnology.co.id"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 rounded-2xl bg-card border border-border font-bold hover:bg-accent transition-all flex items-center gap-2"
+            >
+              Profil Perusahaan <ExternalLink className="w-5 h-5" />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Programs Section - 5 PROGRAM MAGANG DENGAN DETAIL */}
+      <section id="programs" className="py-24 bg-accent/30">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Program Magang Tersedia</h2>
+            <p className="text-muted-foreground">Pilih program yang sesuai dengan minat dan bakat Anda</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {programs.map((program) => (
+              <div key={program.id} className="group relative bg-card border border-border p-8 rounded-3xl hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-500">
+                <div className="absolute top-8 right-8 w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+
+                <div className="mb-6">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary/60">{program.program_code}</span>
+                  <h3 className="text-2xl font-bold mt-1 group-hover:text-primary transition-colors">{program.program_name}</h3>
+                </div>
+
+                <p className="text-muted-foreground mb-8 line-clamp-3">
+                  {program.description}
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span>Reg: {new Date(program.registration_start).toLocaleDateString()} - {new Date(program.registration_end).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span>Kuota: {program.quota} Peserta</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>Lokasi: Tangerang & Semarang</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => openModal(program)}
+                    className="w-1/2 py-3 rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-all"
+                  >
+                    Lihat Detail
+                  </button>
+                  <button
+                    onClick={() => navigate('/register', { state: { programCode: program.program_code } })}
+                    className="w-1/2 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    Daftar <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Modal Detail Program */}
+      {isModalOpen && selectedProgram && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
+          <div className="bg-card rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-card border-b border-border p-6 flex justify-between items-center">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-widest text-primary/60">{selectedProgram.program_code}</span>
+                <h2 className="text-2xl font-bold">{selectedProgram.program_name}</h2>
+              </div>
+              <button onClick={closeModal} className="w-10 h-10 rounded-full bg-accent hover:bg-accent/80 flex items-center justify-center text-2xl">✕</button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Lokasi Penempatan */}
+              <div>
+                <h3 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5" /> Lokasi Penempatan
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-accent/20 p-4 rounded-xl">
+                    <p className="font-semibold">📍 Tangerang</p>
+                    <p className="text-sm text-muted-foreground mt-1">JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129</p>
+                  </div>
+                  <div className="bg-accent/20 p-4 rounded-xl">
+                    <p className="font-semibold">📍 Semarang</p>
+                    <p className="text-sm text-muted-foreground mt-1">JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278</p>
+                  </div>
+                </div>
+                <div className="mt-3 text-sm text-muted-foreground">
+                  <span className="font-semibold">🏠 Tempat Tinggal:</span> Tidak disediakan
+                </div>
+              </div>
+
+              {/* Deskripsi Pekerjaan */}
+              <div>
+                <h3 className="text-lg font-bold text-primary mb-2">📋 Deskripsi Pekerjaan</h3>
+                <p className="text-muted-foreground">{selectedProgram.description}</p>
+              </div>
+
+              {/* Rincian Penugasan */}
+              <div>
+                <h3 className="text-lg font-bold text-primary mb-2">📌 Rincian Penugasan/Tanggung Jawab</h3>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  {selectedProgram.id === 1 && (
+                    <>
+                      <li>Membangun komponen UI menggunakan React.js dan Tailwind CSS</li>
+                      <li>Mengintegrasikan frontend dengan REST API</li>
+                      <li>Memastikan tampilan responsif di berbagai device</li>
+                      <li>Berkolaborasi dengan tim backend dan desainer</li>
+                      <li>Melakukan debugging dan optimasi performa</li>
+                    </>
+                  )}
+                  {selectedProgram.id === 2 && (
+                    <>
+                      <li>Mengembangkan REST API menggunakan Node.js dan Express</li>
+                      <li>Merancang dan mengoptimalkan database SQL</li>
+                      <li>Mengimplementasikan autentikasi dan keamanan</li>
+                      <li>Melakukan unit testing dan debugging</li>
+                      <li>Dokumentasi API</li>
+                    </>
+                  )}
+                  {selectedProgram.id === 3 && (
+                    <>
+                      <li>Melakukan user research dan analisis kebutuhan</li>
+                      <li>Membuat wireframe, mockup, dan prototype di Figma</li>
+                      <li>Mendesain user interface yang intuitif dan menarik</li>
+                      <li>Berkolaborasi dengan developer untuk implementasi desain</li>
+                      <li>Melakukan usability testing</li>
+                    </>
+                  )}
+                  {selectedProgram.id === 4 && (
+                    <>
+                      <li>Mengumpulkan dan menganalisis kebutuhan bisnis</li>
+                      <li>Membuat dokumentasi BRD dan FRD</li>
+                      <li>Menjadi jembatan antara klien dan tim teknis</li>
+                      <li>Memvalidasi solusi yang dikembangkan</li>
+                      <li>Membantu dalam proses testing UAT</li>
+                    </>
+                  )}
+                  {selectedProgram.id === 5 && (
+                    <>
+                      <li>Membuat test plan dan test case</li>
+                      <li>Melakukan manual testing dan regression testing</li>
+                      <li>Melaporkan bug dan memastikan perbaikan</li>
+                      <li>Mengimplementasikan automation testing sederhana</li>
+                      <li>Memastikan kualitas produk sebelum rilis</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              {/* Kompetensi Teknis & Soft Skills */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-primary mb-2">💻 Kompetensi Teknis</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProgram.id === 1 && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                    {selectedProgram.id === 2 && ['Node.js', 'Express.js', 'PostgreSQL', 'REST API', 'Git', 'JWT'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                    {selectedProgram.id === 3 && ['Figma', 'Adobe XD', 'Wireframing', 'Prototyping', 'User Research', 'Usability Testing'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                    {selectedProgram.id === 4 && ['BRD/FRD', 'UML', 'BPMN', 'Analytical Thinking', 'Excel', 'JIRA'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                    {selectedProgram.id === 5 && ['Manual Testing', 'Test Case', 'Bug Reporting', 'Selenium', 'Postman', 'JIRA'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-primary mb-2">🤝 Soft Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {['Komunikasi', 'Kerja Tim', 'Pemecahan Masalah', 'Manajemen Waktu', 'Adaptif'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Persyaratan Khusus */}
+              <div>
+                <h3 className="text-lg font-bold text-primary mb-2">⚠️ Persyaratan Khusus</h3>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>Mahasiswa aktif semester 6 atau lebih</li>
+                  <li>Memiliki laptop pribadi</li>
+                  <li>Kesiapan untuk belajar secara mandiri</li>
+                  <li>Komitmen waktu minimal 3 bulan</li>
+                  <li>Bersedia mengikuti prosedur dan aturan yang berlaku</li>
+                </ul>
+              </div>
+
+              {/* Capaian Pembelajaran */}
+              <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                <h3 className="text-lg font-bold text-green-700 mb-2">🎓 Capaian Pembelajaran</h3>
+                <ul className="list-disc list-inside space-y-1 text-green-700">
+                  <li>Mendapat pengalaman kerja nyata di proyek perusahaan</li>
+                  <li>Mendapat bimbingan dari mentor berpengalaman</li>
+                  <li>Sertifikat magang setelah menyelesaikan program</li>
+                  <li>Portofolio proyek yang bisa ditambahkan ke CV</li>
+                  <li>Peluang menjadi karyawan tetap setelah magang</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    closeModal();
+                    navigate('/register', { state: { programCode: selectedProgram.program_code } });
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all"
+                >
+                  Daftar Sekarang
+                </button>
+                <button onClick={closeModal} className="px-6 py-3 rounded-xl border border-border font-medium hover:bg-accent transition-all">
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pengumuman */}
+      {isAnnouncementModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
+          <div className="bg-card rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-6 flex justify-between items-center text-white">
+              <div>
+                <h2 className="text-2xl font-bold">🎉 Pengumuman Magang</h2>
+                <p className="text-green-50 text-sm mt-1">Selamat! Berikut adalah daftar peserta yang diterima Periode 2026</p>
+              </div>
+              <button onClick={() => setIsAnnouncementModalOpen(false)} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl transition-colors cursor-pointer">✕</button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
+              {isLoadingAnnouncement ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+                  <p className="text-gray-500 font-medium">Memuat data pengumuman...</p>
+                </div>
+              ) : acceptedInterns.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {acceptedInterns.map((intern, idx) => (
+                    <div key={intern.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 font-bold flex items-center justify-center text-xl shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-lg">{intern.name}</h3>
+                        <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                          <Building2 className="w-3.5 h-3.5" /> {intern.university}
+                        </p>
+                      </div>
+                      <div className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-bold uppercase tracking-wider">
+                        DITERIMA
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-gray-900">Belum ada data</h3>
+                  <p className="text-gray-500 mt-1">Daftar peserta yang diterima belum diumumkan atau masih kosong.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-white border-t border-gray-100 flex justify-center">
+              <button
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                className="px-8 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
+              >
+                Tutup Pengumuman
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Program Details Section - TANPA POSISI YANG DIBUKA */}
+      <section className="py-24">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Kesempatan Terbaik untuk Terjun ke Dunia IT! 💼✨</h2>
+            <p className="text-muted-foreground text-lg">
+              Dapatkan pengalaman langsung di lingkungan profesional dan bangun karir impian Anda bersama Rapier Technology.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Left Column */}
+            <div className="bg-card border border-border rounded-3xl p-8">
+              <div>
+                <h3 className="font-bold mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  Lokasi Penempatan
+                </h3>
+                <p className="text-muted-foreground">📍 Tangerang Site & Semarang Site</p>
+              </div>
+
+              <div className="mt-6 pt-2">
+                <h3 className="font-bold mb-3 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  Periode Rekrutmen
+                </h3>
+                <p className="text-muted-foreground">🗓️ 10 – 30 November 2025</p>
+              </div>
+
+              <div className="mt-8 p-5 bg-primary/5 rounded-2xl">
+                <p className="text-foreground font-medium">
+                  ✨ Di sini kamu akan belajar langsung dari mentor berpengalaman, terlibat di actual project,
+                  membangun relasi profesional, sampai punya peluang career path ke depannya! 🎯
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column - Maps */}
+            <div className="bg-card border border-border rounded-3xl overflow-hidden">
+              <div className="p-6 pb-0">
+                <h3 className="text-2xl font-bold mb-2">Lokasi Kantor</h3>
+                <p className="text-muted-foreground">Kunjungi kami di dua lokasi strategis kami</p>
+              </div>
+
+              {/* Rapier Tangerang */}
+              <div className="p-6 border-b border-border">
+                <div className="flex items-start gap-3 mb-3">
+                  <Building2 className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <h4 className="font-bold">Rapier Tangerang</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129 Indonesia
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full h-48 rounded-xl overflow-hidden bg-muted mt-2">
+                  <iframe
+                    title="Rapier Tangerang Map"
+                    className="w-full h-full"
+                    src="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang,+Banten+15129&output=embed"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+
+              {/* Rapier Semarang */}
+              <div className="p-6">
+                <div className="flex items-start gap-3 mb-3">
+                  <Building2 className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <h4 className="font-bold">Rapier Semarang</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278, Indonesia
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full h-48 rounded-xl overflow-hidden bg-muted mt-2">
+                  <iframe
+                    title="Rapier Semarang Map"
+                    className="w-full h-full"
+                    src="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang,+Jawa+Tengah+50278&output=embed"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact & Social Media Section */}
+      <section className="py-24 bg-accent/30">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Hubungi Kami</h2>
+              <p className="text-muted-foreground text-lg">
+                Tanyakan, diskusikan, dan temukan solusi bersama tim kami. Kami siap mendengarkan dan membantu Anda.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Contact Info - EMAIL BISA DIKLIK */}
+              <div className="bg-card border border-border rounded-3xl p-8">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Hubungi Kami
+                </h3>
+                <div className="space-y-4">
+                  {/* EMAIL - Bisa langsung klik */}
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5" />
+                    <a
+                      href="mailto:contact@rapiertechnology.co.id"
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      contact@rapiertechnology.co.id
+                    </a>
+                  </div>
+
+                  {/* WHATSAPP - Bisa langsung chat */}
+                  <div className="flex items-center gap-3">
+                    <SocialIcon
+                      network="whatsapp"
+                      url="https://wa.me/6281297770484"
+                      bgColor="#25D366"
+                      fgColor="white"
+                      style={{ height: 28, width: 28 }}
+                      target="_blank"
+                    />
+                    <a
+                      href="https://wa.me/6281297770484"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      +62 812-9777-0484
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="bg-card border border-border rounded-3xl p-8">
+                <h3 className="text-xl font-bold mb-6">Ikuti Kami di Sosial Media</h3>
+                <div className="flex flex-wrap gap-5">
+                  <SocialIcon
+                    network="instagram"
+                    url="https://www.instagram.com/rapiertechnology"
+                    bgColor="transparent"
+                    fgColor="#E4405F"
+                    style={{ height: 45, width: 45 }}
+                    target="_blank"
+                    className="hover:scale-110 transition-transform"
+                  />
+                  <SocialIcon
+                    network="linkedin"
+                    url="https://id.linkedin.com/company/rapitechindonesia"
+                    bgColor="transparent"
+                    fgColor="#0077B5"
+                    style={{ height: 45, width: 45 }}
+                    target="_blank"
+                    className="hover:scale-110 transition-transform"
+                  />
+                  <SocialIcon
+                    network="youtube"
+                    url="https://www.youtube.com/@RapierTechnology"
+                    bgColor="transparent"
+                    fgColor="#FF0000"
+                    style={{ height: 45, width: 45 }}
+                    target="_blank"
+                    className="hover:scale-110 transition-transform"
+                  />
+                  <SocialIcon
+                    network="tiktok"
+                    url="https://www.tiktok.com/@rapiertechnology"
+                    bgColor="transparent"
+                    fgColor="#000000"
+                    style={{ height: 45, width: 45 }}
+                    target="_blank"
+                    className="hover:scale-110 transition-transform"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-border">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+              <Briefcase className="text-white w-4 h-4" />
+            </div>
+            <span className="font-bold">Rapier Intern</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            © 2026 Rapier Technology. Distributor PNP
+          </p>
+          <div className="flex items-center gap-4">
+            <a href="https://rapiertechnology.co.id" className="text-sm text-muted-foreground hover:text-primary transition-colors">Website</a>
+            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Kontak</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

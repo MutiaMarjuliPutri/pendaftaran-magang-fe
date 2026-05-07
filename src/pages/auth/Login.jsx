@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'react-hot-toast'
-import { Loader2, LogIn } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/api/axios'
 
@@ -47,24 +47,38 @@ export default function Login() {
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
 
-      <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-2xl border border-border shadow-2xl relative z-10 backdrop-blur-sm bg-card/80">
+      <div className="w-full max-w-md space-y-6 bg-card p-8 rounded-2xl border border-border shadow-2xl relative z-10 backdrop-blur-sm bg-card/80">
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20 rotate-3 hover:rotate-0 transition-transform duration-300">
-            <LogIn className="text-primary-foreground w-8 h-8" />
+          {/* LOGO */}
+          <div 
+            className="mx-auto w-48 h-48 mb-1 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => navigate('/')}
+            title="Kembali ke Beranda"
+          >
+            <img 
+              src="/logo rapier.jpg" 
+              alt="Rapier Technology Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Selamat Datang</h1>
-          <p className="text-muted-foreground mt-2">Silakan masuk ke akun pendaftaran magang Anda</p>
+
+          
+          {/* TEKS SELAMAT DATANG - JARAK RAPAT */}
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Selamat Datang</h1>
+            <p className="text-muted-foreground text-sm">Silakan masuk ke akun pendaftaran magang Anda</p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="username">
+            <label className="text-sm font-medium leading-none" htmlFor="username">
               Username atau Email
             </label>
             <input
               id="username"
               type="text"
-              className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+              className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all duration-200"
               placeholder="Masukkan username atau email"
               {...register('username')}
             />
@@ -72,13 +86,13 @@ export default function Login() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
+            <label className="text-sm font-medium leading-none" htmlFor="password">
               Kata Sandi
             </label>
             <input
               id="password"
               type="password"
-              className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+              className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all duration-200"
               placeholder="••••••••"
               {...register('password')}
             />
@@ -101,8 +115,8 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="text-center text-sm text-muted-foreground mt-6">
-          Belum punya akun? <span className="text-primary font-semibold hover:underline cursor-pointer transition-all">Hubungi Admin</span>
+        <div className="text-center text-sm text-muted-foreground">
+          Belum punya akun? <span onClick={() => navigate('/register')} className="text-primary font-semibold hover:underline cursor-pointer transition-all">Daftar</span>
         </div>
       </div>
     </div>

@@ -23,6 +23,7 @@ const schema = z.object({
   program_start_date: z.string().optional(),
   program_end_date: z.string().optional(),
   status: z.enum(["draft", "open", "closed", "ongoing", "finished"]).default("draft"),
+  batch: z.coerce.number().min(1, "Batch minimal 1").max(99).optional(),
 });
 
 export default function InternshipPrograms() {
@@ -64,6 +65,7 @@ export default function InternshipPrograms() {
       requirements: "",
       skills_needed: "",
       status: "draft",
+      batch: 1,
     });
     setIsModalOpen(true);
   };
@@ -83,6 +85,7 @@ export default function InternshipPrograms() {
       program_start_date: item.program_start_date?.split("T")[0],
       program_end_date: item.program_end_date?.split("T")[0],
       status: item.status,
+      batch: item.batch || 1,
     });
     setIsModalOpen(true);
   };
@@ -106,6 +109,12 @@ export default function InternshipPrograms() {
       header: "Kuota",
       accessorKey: "quota",
       className: "text-center",
+    },
+    {
+      header: "Batch",
+      accessorKey: "batch",
+      className: "text-center",
+      cell: (row) => <span className="font-bold">Batch {row.batch || "-"}</span>
     },
     {
       header: "Status",
@@ -175,6 +184,16 @@ export default function InternshipPrograms() {
                   placeholder="PROG-WEB-01"
                 />
                 {errors.program_code && <p className="text-xs text-destructive">{errors.program_code.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batch</label>
+                <input
+                  type="number"
+                  {...register("batch")}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  placeholder="Contoh: 11"
+                />
+                {errors.batch && <p className="text-xs text-destructive">{errors.batch.message}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Kuota</label>

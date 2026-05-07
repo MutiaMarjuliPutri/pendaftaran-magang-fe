@@ -19,6 +19,12 @@ import ReportTypes from "@/pages/master/ReportTypes";
 import Reports from "@/pages/master/Reports";
 import LogBooks from "@/pages/master/LogBooks";
 
+import Home from "@/pages/Home";
+import Register from "@/pages/auth/Register";  
+import ApplyInternship from "@/pages/ApplyInternship";
+import PublicApply from "@/pages/PublicApply";
+import Certificate from "@/pages/Certificate";
+
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -27,36 +33,46 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/register" element={<PublicApply />} />  
       <Route path="/login" element={<Login />} />
 
       <Route
-        path="/"
+        path="/certificate/:id"
+        element={
+          <ProtectedRoute>
+            <Certificate />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         element={
           <ProtectedRoute>
             <DashboardLayout />
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/apply" element={<ApplyInternship />} />
 
         {/* Master Data Routes */}
-        <Route path="master/divisions" element={<Divisions />} />
-        <Route path="master/internship-periods" element={<InternshipPeriods />} />
-        <Route path="master/internship-programs" element={<InternshipPrograms />} />
-        <Route path="master/registration-statuses" element={<RegistrationStatuses />} />
-        <Route path="master/placements" element={<Placements />} />
-        <Route path="master/registrations" element={<Registrations />} />
-        <Route path="master/interns" element={<Interns />} />
-        <Route path="master/mentor-interns" element={<MentorInterns />} />
-        <Route path="master/assessment-criteria" element={<AssessmentCriteria />} />
-        <Route path="master/scores" element={<Scores />} />
-        <Route path="master/report-types" element={<ReportTypes />} />
-        <Route path="master/reports" element={<Reports />} />
-        <Route path="master/log-books" element={<LogBooks />} />
+        <Route path="/master/divisions" element={<Divisions />} />
+        <Route path="/master/internship-periods" element={<InternshipPeriods />} />
+        <Route path="/master/internship-programs" element={<InternshipPrograms />} />
+        <Route path="/master/registration-statuses" element={<RegistrationStatuses />} />
+        <Route path="/master/placements" element={<Placements />} />
+        <Route path="/master/registrations" element={<Registrations />} />
+        <Route path="/master/interns" element={<Interns />} />
+        <Route path="/master/mentor-interns" element={<MentorInterns />} />
+        <Route path="/master/assessment-criteria" element={<AssessmentCriteria />} />
+        <Route path="/master/scores" element={<Scores />} />
+        <Route path="/master/report-types" element={<ReportTypes />} />
+        <Route path="/master/reports" element={<Reports />} />
+        <Route path="/master/log-books" element={<LogBooks />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

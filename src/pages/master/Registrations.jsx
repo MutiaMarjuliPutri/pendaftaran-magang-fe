@@ -3,17 +3,16 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User } from "lucide-react";
+import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/api/axios";
+import api, { FILE_URL } from "@/api/axios";
 
 const schema = z.object({
   internship_program_id: z.string().min(1, "Program magang wajib dipilih"),
   status_id: z.string().min(1, "Status wajib dipilih"),
-  cv_file: z.string().optional(),
   position_id: z.string().optional(),
   duration: z.coerce.number().min(1, "Durasi minimal 1 bulan"),
   notes: z.string().optional(),
@@ -29,19 +28,77 @@ export default function Registrations() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [cvFileName, setCvFileName] = useState("");
+  const [cvFileUrl, setCvFileUrl] = useState("");
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
+    defaultValues: {
+      internship_program_id: "",
+      status_id: "",
+      position_id: "",
+      duration: 3,
+      notes: "",
+    },
   });
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.type !== "application/pdf") {
+      alert("Hanya file PDF yang diperbolehkan");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran file maksimal 5MB");
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const response = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setCvFileUrl(response.data.path);
+      setCvFileName(file.name);
+      alert("File CV berhasil diupload!");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal upload file CV");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeFile = () => {
+    setCvFileUrl("");
+    setCvFileName("");
+  };
 
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ internship_program_id: "", status_id: "", position_id: "", duration: 3, notes: "" });
+    reset({
+      internship_program_id: "",
+      status_id: "",
+      position_id: "",
+      duration: 3,
+      notes: "",
+    });
+    setCvFileUrl("");
+    setCvFileName("");
     setIsModalOpen(true);
   };
 
@@ -54,15 +111,26 @@ export default function Registrations() {
       duration: item.duration,
       notes: item.notes || "",
     });
+    setCvFileUrl(item.cv_file || "");
+    setCvFileName(item.cv_file ? item.cv_file.split("/").pop() : "");
     setIsModalOpen(true);
   };
 
   const onSubmit = (formData) => {
+    const submitData = {
+      ...formData,
+      cv_file: cvFileUrl,
+    };
+
     if (selectedItem) {
-      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { onSuccess: () => setIsModalOpen(false) });
+      updateMutation.mutate({ id: selectedItem.id, updatedData: submitData }, { onSuccess: () => setIsModalOpen(false) });
     } else {
-      createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
+      createMutation.mutate(submitData, { onSuccess: () => setIsModalOpen(false) });
     }
+  };
+
+  const handleQuickStatusUpdate = (id, statusId) => {
+    updateMutation.mutate({ id, updatedData: { status_id: statusId } });
   };
 
   const columns = [
@@ -94,20 +162,38 @@ export default function Registrations() {
     },
     {
       header: "Status",
-      cell: (row) => <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm bg-primary/10 text-primary">{row.status?.name || "Pending"}</span>,
+      cell: (row) => {
+        const statusColors = {
+          pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+          interview1: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+          interview2: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+          accepted: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+          rejected: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+          documents_review: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+        };
+        const colorClass = statusColors[row.status?.name] || "bg-primary/10 text-primary border-primary/20";
+        return (
+          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border ${colorClass}`}>
+            {row.status?.name?.replace("_", " ") || "Pending"}
+          </span>
+        );
+      },
     },
     {
       header: "Dokumen",
       cell: (row) => (
         <div className="flex gap-2">
           {row.cv_file && (
-            <a href={row.cv_file} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all" title="Lihat CV">
+            <a 
+              href={`${FILE_URL}${row.cv_file}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all" 
+              title="Lihat CV"
+            >
               <FileText size={14} />
             </a>
           )}
-          <button className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all" title="Detail Pendaftaran">
-            <ExternalLink size={14} />
-          </button>
         </div>
       ),
     },
@@ -115,7 +201,18 @@ export default function Registrations() {
       header: "Aksi",
       className: "text-right",
       cell: (row) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end items-center gap-2">
+          <select
+            value={row.status_id}
+            onChange={(e) => handleQuickStatusUpdate(row.id, e.target.value)}
+            className="h-8 bg-muted border-none text-[10px] font-bold uppercase rounded-lg px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all hover:bg-muted/80"
+          >
+            {statuses?.map((s) => (
+              <option key={s.id} value={s.id} className="text-black bg-white">
+                {s.name.replace("_", " ")}
+              </option>
+            ))}
+          </select>
           <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
             <Edit2 size={16} />
           </button>
@@ -141,7 +238,6 @@ export default function Registrations() {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onAdd={onAdd}
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
@@ -158,7 +254,7 @@ export default function Registrations() {
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Program Magang</label>
+              <label className="text-sm font-medium">Program Magang <span className="text-red-500">*</span></label>
               <select {...register("internship_program_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
                 <option value="">Pilih Program</option>
                 {programs?.map((p) => (
@@ -181,7 +277,7 @@ export default function Registrations() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status Pendaftaran</label>
+              <label className="text-sm font-medium">Status Pendaftaran <span className="text-red-500">*</span></label>
               <select {...register("status_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
                 <option value="">Pilih Status</option>
                 {statuses?.map((s) => (
@@ -204,10 +300,30 @@ export default function Registrations() {
               {errors.duration && <p className="text-xs text-destructive">{errors.duration.message}</p>}
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium">Upload CV (PDF)</label>
+              <div className="flex items-center gap-3">
+                <label className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white cursor-pointer transition-all ${uploading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"}`}>
+                  <Upload size={16} />
+                  {uploading ? "Uploading..." : "Pilih File PDF"}
+                  <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
+                </label>
+                {cvFileName && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <FileText size={14} />
+                    <span className="truncate max-w-[150px]">{cvFileName}</span>
+                    <button type="button" onClick={removeFile} className="text-red-500 hover:text-red-700">
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">Format PDF, maksimal 5MB</p>
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Catatan Tambahan</label>
               <textarea
                 {...register("notes")}
-                className="flex min-h-[110px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
                 placeholder="Catatan internal..."
               />
             </div>
