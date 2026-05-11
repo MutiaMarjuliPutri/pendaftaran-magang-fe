@@ -4,6 +4,7 @@ import {
   ChevronRight, 
   ChevronsLeft, 
   ChevronsRight,
+  ChevronDown,
   Search,
   Plus,
   Loader2,
@@ -26,6 +27,21 @@ export default function DataTable({
   groupByKey
 }) {
   let lastGroupValue = null;
+  const [collapsedGroups, setCollapsedGroups] = React.useState({});
+  const groupCounts = groupByKey
+    ? data.reduce((acc, row) => {
+        const key = row[groupByKey] || "Lainnya";
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {})
+    : {};
+
+  const toggleGroup = (groupValue) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupValue || "Lainnya"]: !prev[groupValue || "Lainnya"],
+    }));
+  };
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -90,6 +106,8 @@ export default function DataTable({
                 data.map((row, rowIndex) => {
                   const currentGroupValue = groupByKey ? row[groupByKey] : null;
                   const showSeparator = groupByKey && currentGroupValue !== lastGroupValue;
+                  const groupKey = currentGroupValue || "Lainnya";
+                  const isCollapsed = Boolean(collapsedGroups[groupKey]);
                   lastGroupValue = currentGroupValue;
 
                   return (
@@ -97,29 +115,41 @@ export default function DataTable({
                       {showSeparator && (
                         <tr className="bg-red-50/30 select-none">
                           <td colSpan={columns.length} className="px-0 py-0">
-                            <div className="flex items-center bg-gradient-to-r from-red-900/10 via-red-900/5 to-transparent px-6 py-3 border-y border-red-900/10">
+                            <button
+                              type="button"
+                              onClick={() => toggleGroup(currentGroupValue)}
+                              className="w-full flex items-center bg-gradient-to-r from-red-900/10 via-red-900/5 to-transparent px-6 py-3 border-y border-red-900/10 hover:from-red-900/15 transition-colors text-left"
+                            >
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-red-900/20 flex items-center justify-center text-red-900 shadow-sm border border-red-900/20">
-                                  <Layers size={14} />
+                                  <ChevronRight size={14} className={cn("transition-transform", !isCollapsed && "rotate-90")} />
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-sm font-extrabold text-red-900">
                                     {groupByKey.charAt(0).toUpperCase() + groupByKey.slice(1)} {currentGroupValue || "Lainnya"}
                                   </span>
+                                  <span className="text-[10px] font-semibold text-red-900/60">
+                                    {groupCounts[groupKey] || 0} peserta
+                                  </span>
                                 </div>
                               </div>
                               <div className="ml-8 flex-1 h-[1px] bg-gradient-to-r from-red-900/20 to-transparent"></div>
-                            </div>
+                              <span className="ml-4 text-[10px] font-bold uppercase tracking-wider text-red-900/60">
+                                {isCollapsed ? "Expand" : "Collapse"}
+                              </span>
+                            </button>
                           </td>
                         </tr>
                       )}
-                      <tr className="hover:bg-muted/30 transition-colors group">
-                        {columns.map((col, colIndex) => (
-                          <td key={colIndex} className={cn("px-6 py-4", col.className)}>
-                            {col.cell ? col.cell(row) : row[col.accessorKey]}
-                          </td>
-                        ))}
-                      </tr>
+                      {!isCollapsed && (
+                        <tr className="hover:bg-muted/30 transition-colors group">
+                          {columns.map((col, colIndex) => (
+                            <td key={colIndex} className={cn("px-6 py-4", col.className)}>
+                              {col.cell ? col.cell(row) : row[col.accessorKey]}
+                            </td>
+                          ))}
+                        </tr>
+                      )}
                     </React.Fragment>
                   );
                 })

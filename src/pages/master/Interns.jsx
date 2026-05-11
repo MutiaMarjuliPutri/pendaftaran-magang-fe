@@ -8,11 +8,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
+const isSchoolInstitution = (value = "") => {
+  const text = value.toLowerCase();
+  return ["smk", "sma", "ma ", "man ", "mts", "smp", "sekolah"].some((keyword) => text.includes(keyword));
+};
+
 const schema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   email: z.string().email("Email tidak valid"),
   phone: z.string().min(1, "Nomor telepon wajib diisi"),
-  university: z.string().min(1, "Universitas wajib diisi"),
+  university: z.string().min(1, "Institusi wajib diisi"),
   major: z.string().min(1, "Jurusan wajib diisi"),
   semester: z.coerce.number().min(1).max(14).optional(),
   status: z.enum(["active", "inactive", "graduated", "dropped"]).default("active"),
@@ -30,6 +35,7 @@ export default function Interns() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -66,6 +72,9 @@ export default function Interns() {
       createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
     }
   };
+
+  const watchedInstitution = watch("university");
+  const semesterLabel = isSchoolInstitution(watchedInstitution) ? "Kelas" : "Semester";
 
   const columns = [
     {
@@ -110,7 +119,7 @@ export default function Interns() {
             <GraduationCap size={14} className="text-primary" /> {row.university}
           </div>
           <span className="text-xs text-muted-foreground">
-            {row.major} (Smt {row.semester})
+            {row.major} ({isSchoolInstitution(row.university) ? "Kelas" : "Smt"} {row.semester || "-"})
           </span>
         </div>
       ),
@@ -204,8 +213,8 @@ export default function Interns() {
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Universitas</label>
-              <input {...register("university")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
+              <label className="text-sm font-medium">Institusi / Sekolah / Universitas</label>
+              <input {...register("university")} placeholder="Contoh: SMK Negeri 1 / Universitas Indonesia" className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
               {errors.university && <p className="text-xs text-destructive">{errors.university.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -215,12 +224,16 @@ export default function Interns() {
                 {errors.major && <p className="text-xs text-destructive">{errors.major.message}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Semester</label>
+                <label className="text-sm font-medium">{semesterLabel}</label>
                 <input
                   type="number"
                   {...register("semester")}
+                  placeholder={semesterLabel === "Kelas" ? "10 / 11 / 12" : "1 - 14"}
                   className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Isi kelas untuk siswa, atau semester untuk mahasiswa.
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

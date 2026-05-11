@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Radio } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,6 +19,7 @@ const schema = z.object({
   program_end: z.string().min(1, "Tanggal selesai program wajib diisi"),
   quota_total: z.coerce.number().min(1, "Kuota minimal 1"),
   is_active: z.boolean().default(true),
+  registration_status: z.enum(["open", "closed", "announced"]).default("open"),
 });
 
 export default function InternshipPeriods() {
@@ -38,6 +39,7 @@ export default function InternshipPeriods() {
     defaultValues: {
       is_active: true,
       semester: "ganjil",
+      registration_status: "open",
     },
   });
 
@@ -54,6 +56,7 @@ export default function InternshipPeriods() {
       program_end: "",
       quota_total: 0,
       is_active: true,
+      registration_status: "open",
     });
     setIsModalOpen(true);
   };
@@ -71,6 +74,7 @@ export default function InternshipPeriods() {
       program_end: item.program_end?.split("T")[0],
       quota_total: item.quota_total,
       is_active: item.is_active,
+      registration_status: item.registration_status || "open",
     });
     setIsModalOpen(true);
   };
@@ -105,8 +109,20 @@ export default function InternshipPeriods() {
       ),
     },
     {
-      header: "Status",
+      header: "Status Periode",
       cell: (row) => <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>{row.is_active ? "Aktif" : "Tidak Aktif"}</span>,
+    },
+    {
+      header: "Status Pendaftaran",
+      cell: (row) => {
+        const regStatusMap = {
+          open: { label: "🟢 Buka", cls: "bg-green-100 text-green-700" },
+          closed: { label: "🔴 Tutup", cls: "bg-gray-100 text-gray-600" },
+          announced: { label: "🎉 Pengumuman", cls: "bg-amber-100 text-amber-700" },
+        };
+        const s = regStatusMap[row.registration_status] || regStatusMap.open;
+        return <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.cls}`}>{s.label}</span>;
+      },
     },
     {
       header: "Aksi",
@@ -205,6 +221,22 @@ export default function InternshipPeriods() {
               <label htmlFor="is_active" className="text-sm font-medium">
                 Periode Aktif
               </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-1.5">
+                <Radio size={14} className="text-primary" />
+                Status Pendaftaran (Landing Page)
+              </label>
+              <select
+                {...register("registration_status")}
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+              >
+                <option value="open">🟢 Buka Pendaftaran</option>
+                <option value="closed">🔴 Tutup Pendaftaran</option>
+                <option value="announced">🎉 Tampilkan Pengumuman Peserta Diterima</option>
+              </select>
+              <p className="text-[11px] text-muted-foreground">Status ini akan tampil di halaman utama (landing page) untuk umum.</p>
             </div>
           </div>
 

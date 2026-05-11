@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
@@ -13,16 +13,31 @@ import { format } from "date-fns";
 
 const schema = z.object({
   intern_id: z.string().min(1, "Peserta magang wajib dipilih"),
+  field: z.string().min(1, "Bidang mentor wajib dipilih"),
   user_id: z.string().min(1, "Mentor wajib dipilih"),
-  assigned_date: z.string().min(1, "Tanggal penugasan wajib diisi"),
+  assigned_date: z.string().min(1, "Tanggal mulai bimbingan wajib diisi"),
   notes: z.string().optional(),
 });
+
+const fieldOptions = [
+  { value: "backend", label: "Backend (BE)" },
+  { value: "frontend", label: "Frontend (FE)" },
+  { value: "uiux", label: "UI/UX" },
+  { value: "qa", label: "Quality Assurance" },
+  { value: "mobile", label: "Mobile" },
+  { value: "other", label: "Lainnya" },
+];
+
+const fieldLabelMap = fieldOptions.reduce((acc, item) => {
+  acc[item.value] = item.label;
+  return acc;
+}, {});
 
 export default function MentorInterns() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/mentor-interns", "mentor-interns");
 
   const { data: interns } = useQuery({ queryKey: ["interns-all"], queryFn: async () => (await api.get("/master/interns/all")).data.data });
-  const { data: mentors } = useQuery({ queryKey: ["users-all"], queryFn: async () => (await api.get("/master/users/all")).data.data });
+  const { data: mentors } = useQuery({ queryKey: ["mentors-all"], queryFn: async () => (await api.get("/master/users/all", { params: { role_code: "mentor" } })).data.data });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -32,14 +47,18 @@ export default function MentorInterns() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
   });
 
+  const selectedInternId = watch("intern_id");
+  const selectedIntern = useMemo(() => interns?.find((intern) => intern.id === selectedInternId), [interns, selectedInternId]);
+
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ intern_id: "", user_id: "", assigned_date: format(new Date(), "yyyy-MM-dd"), notes: "" });
+    reset({ intern_id: "", field: "", user_id: "", assigned_date: format(new Date(), "yyyy-MM-dd"), notes: "" });
     setIsModalOpen(true);
   };
 
@@ -47,6 +66,7 @@ export default function MentorInterns() {
     setSelectedItem(item);
     reset({
       intern_id: item.intern_id,
+      field: item.field || "",
       user_id: item.user_id,
       assigned_date: item.assigned_date ? format(new Date(item.assigned_date), "yyyy-MM-dd") : "",
       notes: item.notes || "",
@@ -72,9 +92,17 @@ export default function MentorInterns() {
           </div>
           <div>
             <p className="font-bold">{row.intern?.name || "N/A"}</p>
-            <p className="text-xs text-muted-foreground">{row.intern?.university || "-"}</p>
+            <p className="text-xs text-muted-foreground">{row.intern?.registration?.program?.program_name || row.intern?.major || row.intern?.university || "-"}</p>
           </div>
         </div>
+      ),
+    },
+    {
+      header: "Bidang",
+      cell: (row) => (
+        <span className="inline-flex px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+          {fieldLabelMap[row.field] || row.field || "-"}
+        </span>
       ),
     },
     {
@@ -87,7 +115,7 @@ export default function MentorInterns() {
       ),
     },
     {
-      header: "Tanggal Penugasan",
+      header: "Mulai Bimbingan",
       cell: (row) => (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Calendar size={12} />
@@ -131,7 +159,7 @@ export default function MentorInterns() {
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
       />
 
-      <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedItem ? "Edit Penugasan" : "Tambah Penugasan"} onSubmit={handleSubmit(onSubmit)} isLoading={createMutation.isLoading || updateMutation.isLoading}>
+      <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedItem ? "Edit Mentor" : "Atur Mentor"} onSubmit={handleSubmit(onSubmit)} isLoading={createMutation.isLoading || updateMutation.isLoading}>
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Peserta Magang</label>
@@ -139,11 +167,27 @@ export default function MentorInterns() {
               <option value="">Pilih Peserta</option>
               {interns?.map((i) => (
                 <option key={i.id} value={i.id}>
-                  {i.name} ({i.university})
+                  {i.name} ({i.registration?.program?.program_name || i.major || i.university || "-"})
                 </option>
               ))}
             </select>
             {errors.intern_id && <p className="text-xs text-destructive">{errors.intern_id.message}</p>}
+            {selectedIntern?.registration?.position?.name && (
+              <p className="text-xs text-muted-foreground">Penempatan: {selectedIntern.registration.position.name}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Bidang Mentor</label>
+            <select {...register("field")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+              <option value="">Pilih Bidang</option>
+              {fieldOptions.map((field) => (
+                <option key={field.value} value={field.value}>
+                  {field.label}
+                </option>
+              ))}
+            </select>
+            {errors.field && <p className="text-xs text-destructive">{errors.field.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -160,7 +204,7 @@ export default function MentorInterns() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tanggal Penugasan</label>
+            <label className="text-sm font-medium">Tanggal Mulai Bimbingan</label>
             <div className="relative">
               <input
                 type="date"

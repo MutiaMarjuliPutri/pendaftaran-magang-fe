@@ -26,6 +26,7 @@ export default function Reports() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const isStudent = user?.role?.toLowerCase() === 'student' || user?.role?.toLowerCase() === 'intern';
+  const isAccepted = user?.registration?.status?.toLowerCase() === 'accepted';
   
   const { data, isLoading, pagination, setParams, createMutation, deleteMutation } = useCrud("/master/reports", "reports");
   const { data: reportTypes } = useQuery({ queryKey: ["report-types-all"], queryFn: async () => (await api.get("/master/report-types/all")).data.data });
@@ -152,7 +153,6 @@ export default function Reports() {
                 "bg-blue-50 text-blue-600 border-blue-200"
               )}
             >
-              <option value="submitted">Submitted</option>
               <option value="reviewed">Reviewed</option>
               <option value="revision">Revision</option>
               <option value="approved">Approved</option>
@@ -224,11 +224,26 @@ export default function Reports() {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onAdd={isStudent ? onAdd : null}
+        onAdd={isStudent ? (isAccepted ? onAdd : null) : onAdd}
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
       />
+
+      {isStudent && !isAccepted && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+            <Clock size={20} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-amber-900">Fitur Laporan Belum Tersedia</h4>
+            <p className="text-xs text-amber-700 mt-1">
+              Anda baru dapat mengunggah laporan akhir setelah status pendaftaran Anda dinyatakan <span className="font-bold">DITERIMA</span>. 
+              Silakan cek status pendaftaran Anda secara berkala.
+            </p>
+          </div>
+        </div>
+      )}
 
       <FormModal
         isOpen={isModalOpen}

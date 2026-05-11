@@ -24,6 +24,7 @@ import Register from "@/pages/auth/Register";
 import ApplyInternship from "@/pages/ApplyInternship";
 import PublicApply from "@/pages/PublicApply";
 import Certificate from "@/pages/Certificate";
+import Profile from "@/pages/Profile";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -54,6 +55,7 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/apply" element={<ApplyInternship />} />
 
         {/* Master Data Routes */}

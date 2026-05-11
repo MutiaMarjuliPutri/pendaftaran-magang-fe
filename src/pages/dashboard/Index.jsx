@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { 
   Users, 
   UserCheck, 
@@ -12,60 +13,214 @@ import {
   Star,
   Bell,
   FileText,
-  CheckCircle
+  CheckCircle,
+  ClipboardList,
+  CheckCircle2,
+  Award,
+  UserCircle
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import api from '@/api/axios'
 
-const stats = [
-  { 
-    label: 'Total Pendaftar', 
-    value: '1,284', 
-    change: '+12.5%', 
-    icon: Users, 
-    color: 'text-blue-500', 
-    bg: 'bg-blue-500/10' 
+const numberFormatter = new Intl.NumberFormat('id-ID')
+
+const formatNumber = (value) => numberFormatter.format(Number(value || 0))
+
+const formatStatus = (value) => {
+  if (!value) return '-'
+  return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+const statusStyles = {
+  pending: {
+    dot: 'bg-amber-500',
+    text: 'text-amber-600',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/20',
+    bar: 'from-amber-400 to-orange-500'
   },
-  { 
-    label: 'Magang Aktif', 
-    value: '432', 
-    change: '+4.3%', 
-    icon: UserCheck, 
-    color: 'text-emerald-500', 
-    bg: 'bg-emerald-500/10' 
+  documents_review: {
+    dot: 'bg-sky-500',
+    text: 'text-sky-600',
+    bg: 'bg-sky-500/10',
+    border: 'border-sky-500/20',
+    bar: 'from-sky-400 to-blue-500'
   },
-  { 
-    label: 'Menunggu Review', 
-    value: '86', 
-    change: '-2.1%', 
-    icon: Clock, 
-    color: 'text-amber-500', 
-    bg: 'bg-amber-500/10' 
+  interview1: {
+    dot: 'bg-indigo-500',
+    text: 'text-indigo-600',
+    bg: 'bg-indigo-500/10',
+    border: 'border-indigo-500/20',
+    bar: 'from-indigo-400 to-violet-500'
   },
-  { 
-    label: 'Laporan Selesai', 
-    value: '956', 
-    change: '+18.2%', 
-    icon: FileCheck, 
-    color: 'text-purple-500', 
-    bg: 'bg-purple-500/10' 
+  interview2: {
+    dot: 'bg-violet-500',
+    text: 'text-violet-600',
+    bg: 'bg-violet-500/10',
+    border: 'border-violet-500/20',
+    bar: 'from-violet-400 to-fuchsia-500'
   },
+  accepted: {
+    dot: 'bg-emerald-500',
+    text: 'text-emerald-600',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+    bar: 'from-emerald-400 to-teal-500'
+  },
+  rejected: {
+    dot: 'bg-rose-500',
+    text: 'text-rose-600',
+    bg: 'bg-rose-500/10',
+    border: 'border-rose-500/20',
+    bar: 'from-rose-400 to-red-500'
+  },
+  default: {
+    dot: 'bg-slate-500',
+    text: 'text-slate-600',
+    bg: 'bg-slate-500/10',
+    border: 'border-slate-500/20',
+    bar: 'from-slate-400 to-slate-600'
+  }
+}
+
+const getStatusStyle = (status) => statusStyles[status] || statusStyles.default
+
+const getRelativeTime = (date) => {
+  if (!date) return '-'
+  const diff = Date.now() - new Date(date).getTime()
+  const minutes = Math.max(Math.floor(diff / 60000), 0)
+  if (minutes < 1) return 'Baru saja'
+  if (minutes < 60) return `${minutes} menit yang lalu`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} jam yang lalu`
+  return `${Math.floor(hours / 24)} hari yang lalu`
+}
+
+const periodOptions = [
+  { key: 'today', label: 'Hari ini', helper: 'hari ini' },
+  { key: 'week', label: 'Minggu ini', helper: 'minggu ini' },
+  { key: 'month', label: 'Bulan ini', helper: 'bulan ini' },
 ]
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const rawRole = typeof user?.role === 'object' ? user.role?.name : user?.role
+  const userRole = rawRole?.toLowerCase()
+  const isAdmin = userRole === 'admin'
+  const isMentor = userRole === 'mentor'
+  const isStaff = isAdmin || isMentor
+
+  const [period, setPeriod] = useState('today')
+  const selectedPeriod = periodOptions.find((item) => item.key === period) || periodOptions[0]
+
+  const { data: dashboard, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ['dashboard-summary', period],
+    queryFn: async () => (await api.get('/master/dashboard', { params: { period } })).data.data,
+    enabled: isStaff,
+  })
+
+  const overview = dashboard?.overview || {}
+  const charts = dashboard?.charts || {}
+  
+  // Debug role detection
+  console.log('Dashboard Debug:', { userRole, isAdmin, isMentor, isStaff, overview })
+  const statusChart = charts.registrations_by_status || []
+  const topPrograms = charts.top_programs_by_registrations || []
+  const latestRegistrations = dashboard?.latest_registrations || []
+  const totalStatusRegistrations = statusChart.reduce((total, item) => total + Number(item.total || 0), 0)
+  const maxStatusTotal = Math.max(...statusChart.map((item) => Number(item.total || 0)), 1)
+
+  const stats = isMentor ? [
+    {
+      label: 'Peserta Bimbingan',
+      value: formatNumber(overview.global_active_interns),
+      helper: `Total peserta yang Anda bimbing`,
+      icon: Users,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10'
+    },
+    {
+      label: 'Logbook Baru',
+      value: formatNumber(overview.waiting_log_books),
+      helper: `Perlu validasi ${selectedPeriod.helper}`,
+      icon: ClipboardList,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10'
+    },
+    {
+      label: 'Laporan Masuk',
+      value: formatNumber(overview.submitted_reports),
+      helper: `Laporan baru ${selectedPeriod.helper}`,
+      icon: FileText,
+      color: 'text-indigo-500',
+      bg: 'bg-indigo-500/10'
+    },
+    {
+      label: 'Penilaian Selesai',
+      value: formatNumber(overview.global_graduated_interns),
+      helper: `Peserta yang sudah lulus`,
+      icon: CheckCircle2,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10'
+    },
+  ] : [
+    {
+      label: 'Total Pendaftar',
+      value: formatNumber(overview.total_registrations),
+      helper: `${formatNumber(overview.total_registrations)} ${selectedPeriod.helper}`,
+      icon: Users,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10'
+    },
+    {
+      label: 'Peserta Aktif',
+      value: formatNumber(overview.global_active_interns),
+      helper: `Total seluruh peserta aktif`,
+      icon: UserCheck,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10'
+    },
+    {
+      label: 'Peserta Non-Aktif',
+      value: formatNumber(overview.global_inactive_interns),
+      helper: `Selesai/Dikeluarkan: ${formatNumber(Number(overview.global_graduated_interns || 0) + Number(overview.global_dropped_interns || 0))}`,
+      icon: Clock,
+      color: 'text-rose-500',
+      bg: 'bg-rose-500/10'
+    },
+    {
+      label: 'Review Pending',
+      value: formatNumber(overview.pending_review),
+      helper: `${formatNumber(overview.submitted_reports)} laporan perlu dicek`,
+      icon: FileCheck,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10'
+    },
+  ]
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Halo, {user?.full_name?.split(' ')[0] || 'User'}! 👋</h1>
-          <p className="text-muted-foreground mt-1 text-lg">Berikut ringkasan aktivitas sistem pendaftaran magang hari ini.</p>
+          <p className="text-muted-foreground mt-1 text-lg">Berikut ringkasan aktivitas sistem pendaftaran magang {selectedPeriod.helper}.</p>
         </div>
-        {user?.role?.toLowerCase() !== 'student' && user?.role !== 'Intern' && (
+        {isStaff && (
           <div className="flex items-center gap-3 bg-card p-1 rounded-xl border border-border shadow-sm">
-            <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg shadow-sm">Hari ini</button>
-            <button className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors">Minggu ini</button>
-            <button className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors">Bulan ini</button>
+            {periodOptions.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setPeriod(item.key)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  period === item.key
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -227,7 +382,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {user?.role?.toLowerCase() !== 'student' && user?.role !== 'Intern' && (
+      {isStaff && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
@@ -241,12 +396,13 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-1 text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
                     <TrendingUp size={12} />
-                    {stat.change}
+                    Live
                   </div>
                 </div>
                 <div className="mt-4">
                   <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-1 tracking-tight">{stat.value}</p>
+                  <p className="text-3xl font-bold mt-1 tracking-tight">{isDashboardLoading ? '...' : stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{stat.helper}</p>
                 </div>
                 <div className="absolute bottom-0 left-0 h-1 bg-primary w-0 group-hover:w-full transition-all duration-500"></div>
               </div>
@@ -254,70 +410,221 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6 overflow-hidden relative">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-xl font-bold">Aktivitas Pendaftaran</h3>
-                  <p className="text-sm text-muted-foreground">Tren pendaftaran 7 hari terakhir</p>
+            {isAdmin ? (
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6 overflow-hidden relative">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h3 className="text-xl font-bold">Status Pendaftaran</h3>
+                    <p className="text-sm text-muted-foreground">Sebaran proses seleksi saat ini</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Total proses</p>
+                      <p className="text-2xl font-black tracking-tight">{formatNumber(totalStatusRegistrations)}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Users size={22} />
+                    </div>
+                  </div>
+                  <Link to="/master/registrations" className="flex items-center gap-2 text-sm font-medium text-primary hover:underline transition-all">
+                    Lihat Detail <ArrowUpRight size={16} />
+                  </Link>
                 </div>
-                <button className="flex items-center gap-2 text-sm font-medium text-primary hover:underline transition-all">
-                  Lihat Detail <ArrowUpRight size={16} />
-                </button>
-              </div>
-              
-              <div className="h-[300px] flex items-end gap-3 px-2">
-                {[45, 60, 35, 80, 55, 90, 70].map((h, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                    <div 
-                      className="w-full bg-primary/20 rounded-t-lg group-hover:bg-primary transition-all duration-500 cursor-pointer relative"
-                      style={{ height: `${h}%` }}
-                    >
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        {h} Pendaftar
+                
+                <div className="grid grid-cols-1 xl:grid-cols-[240px_1fr] gap-6">
+                  <div className="rounded-2xl bg-muted/40 border border-border p-5 flex flex-col justify-between min-h-[260px]">
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground">Konversi Seleksi</p>
+                      <p className="text-4xl font-black mt-2">
+                        {totalStatusRegistrations
+                          ? `${Math.round((Number(overview.accepted_registrations || 0) / totalStatusRegistrations) * 100)}%`
+                          : '0%'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">Diterima dari total pendaftar yang masuk.</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Diterima</span>
+                        <span className="font-bold text-emerald-600">{formatNumber(overview.accepted_registrations)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Ditolak</span>
+                        <span className="font-bold text-rose-600">{formatNumber(overview.rejected_registrations)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Menunggu</span>
+                        <span className="font-bold text-amber-600">{formatNumber(overview.pending_review)}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground font-medium">H-{6-i}</span>
                   </div>
-                ))}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(statusChart.length ? statusChart : [{ name: 'Belum ada data', total: 0 }]).map((item, i) => {
+                      const style = getStatusStyle(item.name)
+                      const total = Number(item.total || 0)
+                      const percent = totalStatusRegistrations ? Math.round((total / totalStatusRegistrations) * 100) : 0
+                      const width = Math.max((total / maxStatusTotal) * 100, total ? 10 : 2)
+                      return (
+                        <div key={item.id || item.name || i} className={`rounded-2xl border ${style.border} ${style.bg} p-4`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${style.dot}`}></span>
+                                <p className="font-bold truncate">{formatStatus(item.name)}</p>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">{percent}% dari total pendaftaran</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className={`text-2xl font-black ${style.text}`}>{formatNumber(total)}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-bold">data</p>
+                            </div>
+                          </div>
+                          <div className="mt-5 h-2.5 rounded-full bg-background/80 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r ${style.bar}`}
+                              style={{ width: `${width}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+                <h3 className="text-xl font-bold mb-6">Tugas Bimbingan</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link to="/master/log-books" className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                        <ClipboardList size={24} />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-amber-600">{formatNumber(overview.waiting_log_books)}</p>
+                        <p className="text-sm font-bold text-amber-700">Logbook Perlu Validasi</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link to="/master/reports" className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/15 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                        <FileText size={24} />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-indigo-600">{formatNumber(overview.submitted_reports)}</p>
+                        <p className="text-sm font-bold text-indigo-700">Laporan Baru Masuk</p>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+                
+                <div className="mt-8">
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Akses Cepat</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <Link to="/master/interns" className="flex items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium">
+                      <Users size={16} className="text-blue-500" /> Daftar Peserta
+                    </Link>
+                    <Link to="/master/scores" className="flex items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium">
+                      <Award size={16} className="text-emerald-500" /> Penilaian
+                    </Link>
+                    <Link to="/profile" className="flex items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium">
+                      <UserCircle size={16} className="text-purple-500" /> Edit Profil
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold">Log Aktivitas</h3>
+                <h3 className="text-xl font-bold">{isAdmin ? 'Pendaftaran Terbaru' : 'Aktivitas Terbaru'}</h3>
                 <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                   <CalendarDays size={16} className="text-muted-foreground" />
                 </div>
               </div>
               
               <div className="space-y-6">
-                {[
-                  { user: 'Budi Santoso', action: 'mendaftar magang', time: '2 menit yang lalu' },
-                  { user: 'Siti Aminah', action: 'mengunggah laporan', time: '15 menit yang lalu' },
-                  { user: 'Admin', action: 'menyetujui pendaftaran', time: '1 jam yang lalu' },
-                  { user: 'Rahmat Hidayat', action: 'mengisi log book', time: '3 jam yang lalu' },
-                ].map((log, i) => (
+                {latestRegistrations.map((log, i) => (
                   <div key={i} className="flex gap-4 items-start group">
                     <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shrink-0 transition-transform group-hover:scale-110">
-                      {log.user.charAt(0)}
+                      {(log.intern?.name || log.registration_number || '?').charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-bold">{log.user}</span> {log.action}
+                        <span className="font-bold">{log.intern?.name || log.registration_number}</span> {isAdmin ? 'mendaftar' : 'aktivitas'} {log.program?.program_name || 'program magang'}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">{log.time}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{formatStatus(log.status?.name)} - {getRelativeTime(log.registration_date)}</p>
                     </div>
                   </div>
                 ))}
+                {!latestRegistrations.length && (
+                  <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                    Belum ada aktivitas terbaru.
+                  </div>
+                )}
               </div>
               
-              <button className="w-full mt-8 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-all duration-200">
-                Lihat Semua Aktivitas
-              </button>
+              <Link to={isAdmin ? "/master/registrations" : "/master/interns"} className="block text-center w-full mt-8 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-all duration-200">
+                Lihat Semua {isAdmin ? 'Pendaftaran' : 'Peserta'}
+              </Link>
             </div>
           </div>
+
+          {isAdmin && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+                <h3 className="text-xl font-bold">Program Paling Diminati</h3>
+                <p className="text-sm text-muted-foreground mb-6">Top program berdasarkan jumlah pendaftar</p>
+                <div className="space-y-4">
+                  {topPrograms.map((program) => (
+                    <div key={program.id} className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+                      <div className="min-w-0">
+                        <p className="font-bold truncate">{program.program_name}</p>
+                        <p className="text-xs text-muted-foreground">{program.program_code} - Kuota {formatNumber(program.quota)}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-2xl font-bold">{formatNumber(program.total_registrations)}</p>
+                        <p className="text-xs text-muted-foreground">pendaftar</p>
+                      </div>
+                    </div>
+                  ))}
+                  {!topPrograms.length && (
+                    <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                      Belum ada data program.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+                <h3 className="text-xl font-bold">Perlu Dicek</h3>
+                <p className="text-sm text-muted-foreground mb-6">Antrian pekerjaan superadmin</p>
+                <div className="space-y-4">
+                  <Link to="/master/registrations" className="flex items-center justify-between rounded-xl bg-amber-500/10 p-4 hover:bg-amber-500/15 transition-colors">
+                    <span className="font-semibold text-sm">Review pendaftaran</span>
+                    <span className="font-bold">{formatNumber(overview.pending_review)}</span>
+                  </Link>
+                  <Link to="/master/log-books" className="flex items-center justify-between rounded-xl bg-blue-500/10 p-4 hover:bg-blue-500/15 transition-colors">
+                    <span className="font-semibold text-sm">Validasi logbook</span>
+                    <span className="font-bold">{formatNumber(overview.waiting_log_books)}</span>
+                  </Link>
+                  <Link to="/master/reports" className="flex items-center justify-between rounded-xl bg-purple-500/10 p-4 hover:bg-purple-500/15 transition-colors">
+                    <span className="font-semibold text-sm">Review laporan</span>
+                    <span className="font-bold">{formatNumber(overview.submitted_reports)}</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
+      <div className="mt-20 p-4 bg-muted/20 rounded-xl border border-dashed border-border text-[10px] text-muted-foreground flex items-center gap-4">
+        <span>Debug: Role [{userRole}]</span>
+        <span>Staff [{isStaff ? 'Yes' : 'No'}]</span>
+        <span>Bimbingan [{overview.global_active_interns || 0}]</span>
+        <span>User ID [{user?.id || '?'}]</span>
+      </div>
     </div>
   )
 }

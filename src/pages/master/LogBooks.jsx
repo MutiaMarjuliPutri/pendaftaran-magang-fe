@@ -34,7 +34,12 @@ const schema = z.object({
 export default function LogBooks() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isMentor = user?.role === "mentor" || user?.role_name === "mentor";
+  const userRole = (user?.role || user?.role_name || "").toLowerCase();
+  const isMentor = userRole === "mentor";
+  const isStudent = userRole === "student" || userRole === "intern";
+  const isAdmin = !isStudent && !isMentor;
+  const currentUserId = user?.id || user?.user_id;
+  const isAccepted = user?.registration?.status?.toLowerCase() === "accepted";
 
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/log-books", "log-books");
 
@@ -105,7 +110,6 @@ export default function LogBooks() {
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const newActivities = range.map((date, idx) => {
       const dateStr = date.toISOString().split("T")[0];
-      // Cari apakah sudah ada aktivitas di tanggal ini untuk mempertahankan deskripsi
       const existing = activities.find(a => a.date === dateStr);
       
       return {
@@ -212,6 +216,17 @@ export default function LogBooks() {
     setIsModalOpen(false);
   };
 
+  // Helper function untuk mendapatkan status label
+  const getValidationStatus = (validation) => {
+    if (validation === "approved" || validation === true || validation === "1") {
+      return { label: "Disetujui", className: "bg-green-100 text-green-700 border-green-200" };
+    } else if (validation === "rejected" || validation === false) {
+      return { label: "Ditolak", className: "bg-red-100 text-red-700 border-red-200" };
+    } else {
+      return { label: "Menunggu", className: "bg-yellow-100 text-yellow-700 border-yellow-200" };
+    }
+  };
+
   const columns = [
     { 
       header: "No", 
@@ -240,6 +255,23 @@ export default function LogBooks() {
       ),
     },
     {
+      header: "Status",
+      cell: (row) => {
+        const status = getValidationStatus(row.validation);
+        return (
+          <span className={cn(
+            "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border",
+            status.className
+          )}>
+            {status.label === "Disetujui" && <CheckCircle size={10} />}
+            {status.label === "Ditolak" && <XCircle size={10} />}
+            {status.label === "Menunggu" && <XCircle size={10} />}
+            {status.label}
+          </span>
+        );
+      },
+    },
+    {
       header: "Validasi",
       cell: (row) => (
         <div className="flex items-center gap-1">
@@ -260,21 +292,7 @@ export default function LogBooks() {
               <option value="rejected">Tolak</option>
             </select>
           ) : (
-            <>
-              {row.validation === "approved" || row.validation === true || row.validation === "1" ? (
-                <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs border border-green-100">
-                  <CheckCircle size={12} /> Terverifikasi
-                </span>
-              ) : row.validation === "rejected" ? (
-                <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs border border-red-100">
-                  <XCircle size={12} /> Ditolak
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs border border-yellow-100">
-                  <XCircle size={12} /> Menunggu
-                </span>
-              )}
-            </>
+            <span className="text-xs text-gray-500">-</span>
           )}
         </div>
       ),
@@ -309,52 +327,35 @@ export default function LogBooks() {
     {
       header: "Aksi",
       className: "text-right",
-      cell: (row) => (
-        <div className="flex justify-end gap-2">
-          {isMentor ? (
-            <>
-              {!row.validation ? (
-                <button 
-                  onClick={() => validateMutation.mutate({ id: row.id, validation: true })} 
-                  className="p-1.5 rounded-lg hover:bg-green-100 text-green-600 transition-colors"
-                  title="Approve"
-                  disabled={validateMutation.isLoading}
-                >
-                  <CheckCircle size={15} />
-                </button>
-              ) : (
-                <button 
-                  onClick={() => validateMutation.mutate({ id: row.id, validation: false })} 
-                  className="p-1.5 rounded-lg hover:bg-orange-100 text-orange-600 transition-colors"
-                  title="Unverify"
-                  disabled={validateMutation.isLoading}
-                >
-                  <XCircle size={15} />
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <button 
-                onClick={() => onEdit(row)} 
-                className="p-1.5 rounded-lg hover:bg-purple-100 text-purple-600 transition-colors"
-                title="Edit"
-                disabled={row.validation}
-              >
-                <Edit2 size={15} />
-              </button>
-              <button 
-                onClick={() => { setSelectedItem(row); setIsDeleteOpen(true); }} 
-                className="p-1.5 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
-                title="Hapus"
-                disabled={row.validation}
-              >
-                <Trash2 size={15} />
-              </button>
-            </>
-          )}
-        </div>
-      ),
+      cell: (row) => {
+        const canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId));
+
+        if (!canManage) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+
+        return (
+          <div className="flex justify-end items-center gap-2">
+            <button
+              onClick={() => onEdit(row)}
+              className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+              title="Edit"
+            >
+              <Edit2 size={16} />
+            </button>
+            <button
+              onClick={() => {
+                setSelectedItem(row);
+                setIsDeleteOpen(true);
+              }}
+              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+              title="Hapus"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -366,11 +367,26 @@ export default function LogBooks() {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onAdd={onAdd}
-        onSearch={(q) => setParams({ q, page: 1 })}
+        onAdd={isStudent ? (isAccepted ? onAdd : null) : onAdd}
+        onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
-        onPageChange={(page) => setParams({ page })}
+        onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
       />
+
+      {isStudent && !isAccepted && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+            <Clock size={20} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-amber-900">Fitur Log Book Belum Tersedia</h4>
+            <p className="text-xs text-amber-700 mt-1">
+              Anda baru dapat mengisi log book setelah status pendaftaran Anda dinyatakan <span className="font-bold">DITERIMA</span>. 
+              Silakan cek status pendaftaran Anda secara berkala.
+            </p>
+          </div>
+        </div>
+      )}
 
       <FormModal
         isOpen={isModalOpen}
@@ -517,12 +533,16 @@ export default function LogBooks() {
               <div>
                 <label className="text-sm font-medium text-gray-500">Status Validasi</label>
                 <div className="mt-1">
-                  {detailItem.validation ? (
-                    <span className="inline-flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs">
-                      <CheckCircle size={12} /> Terverifikasi
+                  {detailItem.validation === "approved" || detailItem.validation === true || detailItem.validation === "1" ? (
+                    <span className="inline-flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs border border-green-200">
+                      <CheckCircle size={12} /> Disetujui
+                    </span>
+                  ) : detailItem.validation === "rejected" || detailItem.validation === false ? (
+                    <span className="inline-flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs border border-red-200">
+                      <XCircle size={12} /> Ditolak
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs">
+                    <span className="inline-flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs border border-yellow-200">
                       <XCircle size={12} /> Menunggu
                     </span>
                   )}

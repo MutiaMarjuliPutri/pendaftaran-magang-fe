@@ -1,26 +1,27 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, FileText, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
+import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, FileText, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import api from "@/api/axios";
+import api, { FILE_URL } from "@/api/axios";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
-    { icon: Briefcase, label: "Lamar Magang", path: "/apply", role: ["student", "Intern"] },
-    { icon: Building2, label: "Divisi", path: "/master/divisions", adminOnly: true },
-    { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods", adminOnly: true },
-    { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs", adminOnly: true },
-    { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses", adminOnly: true },
-    { icon: MapPin, label: "Penempatan", path: "/master/placements", adminOnly: true },
-    { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations", adminOnly: true },
-    { icon: Users, label: "Peserta Magang", path: "/master/interns", adminOnly: true },
-    { icon: CheckCircle2, label: "Mentor", path: "/master/mentor-interns", adminOnly: true },
-    { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", adminOnly: true },
-    { icon: Award, label: "Penilaian", path: "/master/scores", adminOnly: true },
-    { icon: FileText, label: "Jenis Laporan", path: "/master/report-types", adminOnly: true },
-    { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports" },
-    { icon: FileBarChart, label: "Log Book", path: "/master/log-books" },
+    { icon: UserCircle, label: "Profil Saya", path: "/profile" },
+    { icon: Briefcase, label: "Lamar Magang", path: "/apply", roles: ["student"] },
+    { icon: Building2, label: "Divisi", path: "/master/divisions", roles: ["admin"] },
+    { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods", roles: ["admin"] },
+    { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs", roles: ["admin"] },
+    { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses", roles: ["admin"] },
+    { icon: MapPin, label: "Penempatan", path: "/master/placements", roles: ["admin"] },
+    { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations", roles: ["admin"] },
+    { icon: Users, label: "Peserta Magang", path: "/master/interns", roles: ["admin", "mentor"] },
+    { icon: CheckCircle2, label: "Penugasan Mentor", path: "/master/mentor-interns", roles: ["admin"] },
+    { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", roles: ["admin", "mentor"] },
+    { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
+    { icon: FileText, label: "Jenis Laporan", path: "/master/report-types", roles: ["admin"] },
+    { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
+    { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["admin", "mentor", "student", "intern"] },
   ];
 
 export default function DashboardLayout() {
@@ -30,7 +31,6 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuthStore();
 
-  // Ambil data terbaru user saat dashboard dimuat
   useEffect(() => {
     const fetchMe = async () => {
       try {
@@ -49,15 +49,24 @@ export default function DashboardLayout() {
   };
 
   const filteredMenuItems = menuItems.filter(item => {
-    const userRole = user?.role?.toLowerCase();
-    // Jika menu khusus admin, sembunyikan dari student/intern
-    if (item.adminOnly && (userRole === 'student' || userRole === 'intern')) return false;
-    // Jika menu khusus role tertentu, cek apakah role user cocok
-    if (item.role && !item.role.some(r => r.toLowerCase() === userRole)) return false;
+    const rawRole = typeof user?.role === 'object' ? user.role?.name : user?.role;
+    const userRole = rawRole?.toLowerCase();
+    
+    // Jika menu memiliki batasan role
+    if (item.roles && !item.roles.some(r => r.toLowerCase() === userRole)) {
+      return false;
+    }
     
     // Jika menu "Lamar Magang", sembunyikan kalau sudah diterima (jadi intern)
     if (item.path === "/apply") {
       if (userRole === 'intern' || user?.registration?.status?.toLowerCase() === 'accepted' || user?.registration?.intern_id) {
+        return false;
+      }
+    }
+
+    // Jika menu "Log Book" atau "Laporan & Sertifikat", sembunyikan untuk student yang belum diterima
+    if (item.path === "/master/log-books" || item.path === "/master/reports") {
+      if ((userRole === 'student' || userRole === 'intern') && user?.registration?.status?.toLowerCase() !== 'accepted') {
         return false;
       }
     }
@@ -177,13 +186,27 @@ export default function DashboardLayout() {
               <span className="absolute top-2 right-2.5 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
             </button>
             <div className="h-8 w-px bg-border mx-2"></div>
-            <div className="flex items-center gap-3 pl-2">
+            <Link to="/profile" className="flex items-center gap-3 pl-2 hover:bg-muted p-1.5 rounded-xl transition-all">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold leading-none">{user?.full_name || "User"}</p>
                 <p className="text-xs text-muted-foreground mt-1 capitalize">{user?.role || "Guest"}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-sm">{(user?.full_name || "U").charAt(0).toUpperCase()}</div>
-            </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-sm overflow-hidden">
+                {user?.photo ? (
+                  <img 
+                    src={`${FILE_URL}${user.photo}`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://ui-avatars.com/api/?name=" + (user?.full_name || "User");
+                    }}
+                  />
+                ) : (
+                  (user?.full_name || "U").charAt(0).toUpperCase()
+                )}
+              </div>
+            </Link>
           </div>
         </header>
 

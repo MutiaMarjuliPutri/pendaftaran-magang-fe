@@ -111,16 +111,18 @@ export default function Registrations() {
       duration: item.duration,
       notes: item.notes || "",
     });
-    setCvFileUrl(item.cv_file || "");
-    setCvFileName(item.cv_file ? item.cv_file.split("/").pop() : "");
+    setCvFileUrl("");
+    setCvFileName("");
     setIsModalOpen(true);
   };
 
   const onSubmit = (formData) => {
-    const submitData = {
-      ...formData,
-      cv_file: cvFileUrl,
-    };
+    const submitData = selectedItem
+      ? formData
+      : {
+          ...formData,
+          cv_file: cvFileUrl,
+        };
 
     if (selectedItem) {
       updateMutation.mutate({ id: selectedItem.id, updatedData: submitData }, { onSuccess: () => setIsModalOpen(false) });
@@ -299,26 +301,28 @@ export default function Registrations() {
               />
               {errors.duration && <p className="text-xs text-destructive">{errors.duration.message}</p>}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Upload CV (PDF)</label>
-              <div className="flex items-center gap-3">
-                <label className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white cursor-pointer transition-all ${uploading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"}`}>
-                  <Upload size={16} />
-                  {uploading ? "Uploading..." : "Pilih File PDF"}
-                  <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
-                </label>
-                {cvFileName && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <FileText size={14} />
-                    <span className="truncate max-w-[150px]">{cvFileName}</span>
-                    <button type="button" onClick={removeFile} className="text-red-500 hover:text-red-700">
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
+            {!selectedItem && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Upload CV (PDF)</label>
+                <div className="flex items-center gap-3">
+                  <label className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white cursor-pointer transition-all ${uploading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"}`}>
+                    <Upload size={16} />
+                    {uploading ? "Uploading..." : "Pilih File PDF"}
+                    <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
+                  </label>
+                  {cvFileName && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <FileText size={14} />
+                      <span className="truncate max-w-[150px]">{cvFileName}</span>
+                      <button type="button" onClick={removeFile} className="text-red-500 hover:text-red-700">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400">Format PDF, maksimal 5MB</p>
               </div>
-              <p className="text-xs text-gray-400">Format PDF, maksimal 5MB</p>
-            </div>
+            )}
             <div className="space-y-2">
               <label className="text-sm font-medium">Catatan Tambahan</label>
               <textarea

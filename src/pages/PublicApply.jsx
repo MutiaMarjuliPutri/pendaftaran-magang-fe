@@ -15,12 +15,14 @@ export default function PublicApply() {
   const [uploading, setUploading] = useState(false);
   const [cvFile, setCvFile] = useState(null);
   const [cvFileName, setCvFileName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     username: '',
     phone: '',
     password: '',
+    applicant_type: 'mahasiswa', // 'mahasiswa' atau 'siswa'
     university: '',
     major: '',
     semester: '',
@@ -70,7 +72,8 @@ export default function PublicApply() {
   const uploadFile = async (file) => {
     const data = new FormData();
     data.append('file', file);
-    const response = await api.post('/upload', data, {
+    // Gunakan endpoint publik — tidak butuh login
+    const response = await api.post('/public/upload-cv', data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data.path;
@@ -80,6 +83,14 @@ export default function PublicApply() {
     e.preventDefault();
     if (!cvFile) {
       toast.error('Harap upload file CV (PDF)');
+      return;
+    }
+    if (formData.password !== confirmPassword) {
+      toast.error('Konfirmasi kata sandi tidak cocok!');
+      return;
+    }
+    if (formData.password.length < 6) {
+      toast.error('Kata sandi minimal 6 karakter!');
       return;
     }
     setUploading(true);
@@ -178,28 +189,89 @@ export default function PublicApply() {
               </div>
             </section>
 
-            {/* Academic */}
+            {/* Tipe Pendaftar */}
+            <section>
+              <h2 className="text-xl font-bold flex items-center gap-3 mb-6 text-red-900">
+                <div className="w-10 h-10 rounded-xl bg-red-900/10 flex items-center justify-center text-red-900">
+                  <GraduationCap size={20} />
+                </div>
+                Saya adalah...
+              </h2>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, applicant_type: 'mahasiswa', semester: '' }))}
+                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${
+                    formData.applicant_type === 'mahasiswa'
+                      ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
+                      : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
+                  }`}
+                >
+                  <GraduationCap size={20} />
+                  Mahasiswa / Mahasiswi
+                  {formData.applicant_type === 'mahasiswa' && <span className="w-2 h-2 rounded-full bg-red-900 ml-1" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, applicant_type: 'siswa', semester: '' }))}
+                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${
+                    formData.applicant_type === 'siswa'
+                      ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
+                      : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
+                  }`}
+                >
+                  <Briefcase size={20} />
+                  Siswa / Siswi (SMA/SMK)
+                  {formData.applicant_type === 'siswa' && <span className="w-2 h-2 rounded-full bg-red-900 ml-1" />}
+                </button>
+              </div>
+            </section>
+
+            {/* Academic - dinamis berdasarkan tipe pendaftar */}
             <section>
               <h2 className="text-xl font-bold flex items-center gap-3 mb-8 text-red-900">
                 <div className="w-10 h-10 rounded-xl bg-red-900/10 flex items-center justify-center text-red-900">
                   <GraduationCap size={20} />
                 </div>
-                Informasi Akademik
+                {formData.applicant_type === 'siswa' ? 'Informasi Sekolah' : 'Informasi Akademik'}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-1 space-y-2">
-                  <label className="text-sm font-semibold ml-1">Universitas</label>
-                  <input type="text" name="university" value={formData.university} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="Nama Kampus" />
+
+              {formData.applicant_type === 'mahasiswa' ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="md:col-span-1 space-y-2">
+                    <label className="text-sm font-semibold ml-1">Universitas / Perguruan Tinggi</label>
+                    <input type="text" name="university" value={formData.university} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="Nama Kampus" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold ml-1">Program Studi / Jurusan</label>
+                    <input type="text" name="major" value={formData.major} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="Teknik Informatika" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold ml-1">Semester</label>
+                    <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="14" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="1 - 14" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold ml-1">Jurusan</label>
-                  <input type="text" name="major" value={formData.major} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="Informatika" />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="md:col-span-1 space-y-2">
+                    <label className="text-sm font-semibold ml-1">Nama Sekolah (SMA/SMK)</label>
+                    <input type="text" name="university" value={formData.university} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="SMK Negeri 1 ..." />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold ml-1">Jurusan / Kompetensi Keahlian</label>
+                    <input type="text" name="major" value={formData.major} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="Rekayasa Perangkat Lunak" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold ml-1">Kelas</label>
+                    <select name="semester" value={formData.semester} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background focus:ring-2 focus:ring-red-900/20 outline-none transition-all">
+                      <option value="">Pilih Kelas</option>
+                      <option value="10">Kelas 10</option>
+                      <option value="11">Kelas 11</option>
+                      <option value="12">Kelas 12</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold ml-1">Semester</label>
-                  <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="14" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="1-14" />
-                </div>
-              </div>
+              )}
             </section>
 
             {/* Program */}
@@ -272,7 +344,7 @@ export default function PublicApply() {
               </div>
             </section>
 
-            {/* Account Security - MOVED TO BOTTOM */}
+            {/* Account Security */}
             <section>
               <h2 className="text-xl font-bold flex items-center gap-3 mb-8 text-red-900">
                 <div className="w-10 h-10 rounded-xl bg-red-900/10 flex items-center justify-center text-red-900">
@@ -280,26 +352,66 @@ export default function PublicApply() {
                 </div>
                 Keamanan Akun
               </h2>
-              <div className="max-w-md">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+                {/* Password */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold ml-1">Buat Kata Sandi</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input 
-                      type="password" 
-                      name="password" 
-                      value={formData.password} 
-                      onChange={handleChange} 
-                      required 
-                      className="w-full h-12 rounded-xl border border-input pl-11 pr-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all shadow-sm" 
-                      placeholder="••••••••" 
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      minLength={6}
+                      className="w-full h-12 rounded-xl border border-input pl-11 pr-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all shadow-sm"
+                      placeholder="Minimal 6 karakter"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground ml-1 mt-2 flex items-center gap-2">
-                    <Lock size={12} /> Password ini akan digunakan untuk login ke sistem setelah pendaftaran Anda diproses.
-                  </p>
+                  {formData.password.length > 0 && formData.password.length < 6 && (
+                    <p className="text-xs text-red-500 ml-1 flex items-center gap-1">⚠️ Minimal 6 karakter</p>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold ml-1">Konfirmasi Kata Sandi</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className={`w-full h-12 rounded-xl border pl-11 pr-4 outline-none transition-all shadow-sm focus:ring-2 ${
+                        confirmPassword.length === 0
+                          ? 'border-input focus:ring-red-900/20'
+                          : confirmPassword === formData.password
+                          ? 'border-emerald-500 focus:ring-emerald-500/20 bg-emerald-50/30'
+                          : 'border-red-400 focus:ring-red-400/20 bg-red-50/30'
+                      }`}
+                      placeholder="Ulangi kata sandi"
+                    />
+                    {/* Match indicator */}
+                    {confirmPassword.length > 0 && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-base">
+                        {confirmPassword === formData.password ? '✅' : '❌'}
+                      </span>
+                    )}
+                  </div>
+                  {confirmPassword.length > 0 && confirmPassword !== formData.password && (
+                    <p className="text-xs text-red-500 ml-1 flex items-center gap-1">⚠️ Kata sandi tidak cocok</p>
+                  )}
+                  {confirmPassword.length > 0 && confirmPassword === formData.password && (
+                    <p className="text-xs text-emerald-600 ml-1 flex items-center gap-1">✓ Kata sandi cocok</p>
+                  )}
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground ml-1 mt-4 flex items-center gap-2">
+                <Lock size={12} /> Password ini akan digunakan untuk login ke sistem setelah pendaftaran Anda diproses.
+              </p>
             </section>
 
             <div className="pt-8 border-t border-border flex flex-col items-center gap-6">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SocialIcon } from 'react-social-icons';
 import {
@@ -19,21 +19,36 @@ export default function Home() {
   const navigate = useNavigate();
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Status pendaftaran: 'open', 'closed', 'announced'
-  const [periodStatus, setPeriodStatus] = useState('announced');
+  const [periodStatus, setPeriodStatus] = useState(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   const [acceptedInterns, setAcceptedInterns] = useState([]);
   const [isLoadingAnnouncement, setIsLoadingAnnouncement] = useState(false);
+
+  useEffect(() => {
+    const fetchPeriodStatus = async () => {
+      try {
+        const response = await api.get('/public/current-period');
+        const period = response.data?.data;
+        setPeriodStatus(period?.registration_status || 'open');
+      } catch (error) {
+        console.error('Gagal mengambil status periode', error);
+        setPeriodStatus('open');
+      } finally {
+        setIsLoadingStatus(false);
+      }
+    };
+    fetchPeriodStatus();
+  }, []);
 
   const fetchAnnouncement = async () => {
     setIsAnnouncementModalOpen(true);
     setIsLoadingAnnouncement(true);
     try {
-      const response = await api.get('/master/interns?limit=100');
-      setAcceptedInterns(response.data.data);
+      const response = await api.get('/public/announcements');
+      setAcceptedInterns(response.data.data || []);
     } catch (error) {
-      console.error("Gagal mengambil data pengumuman", error);
+      console.error('Gagal mengambil data pengumuman', error);
     } finally {
       setIsLoadingAnnouncement(false);
     }
@@ -49,7 +64,6 @@ export default function Home() {
     setSelectedProgram(null);
   };
 
-  // Data program magang LENGKAP 5 POSISI
   const programs = [
     {
       id: 1,
@@ -103,10 +117,13 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-              <Briefcase className="text-white w-5 h-5" />
-            </div>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo rapier.jpg"
+              alt="Rapier Technology Logo"
+              className="h-12 w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
             <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Rapier Intern
             </span>
@@ -119,7 +136,7 @@ export default function Home() {
               Login
             </button>
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
               className="px-5 py-2 rounded-full bg-red-900 text-white text-sm font-semibold hover:bg-red-950 transition-all shadow-lg shadow-red-900/20 active:scale-95"
             >
               Lamar Sekarang
@@ -134,7 +151,11 @@ export default function Home() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
 
         <div className="container mx-auto px-6 relative z-10 text-center">
-          {periodStatus === 'open' && (
+          {isLoadingStatus ? (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border text-muted-foreground text-xs font-semibold mb-8 animate-pulse">
+              ⏳ Memuat status pendaftaran...
+            </div>
+          ) : periodStatus === 'open' ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -142,22 +163,18 @@ export default function Home() {
               </span>
               Pendaftaran Magang Periode 2026 Dibuka
             </div>
-          )}
-
-          {periodStatus === 'closed' && (
+          ) : periodStatus === 'closed' ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-sm font-semibold mb-8">
-              Pendaftaran Magang Periode 2026 Ditutup
+              🔴 Pendaftaran Magang Periode 2026 Ditutup
             </div>
-          )}
-
-          {periodStatus === 'announced' && (
+          ) : periodStatus === 'announced' ? (
             <button
               onClick={fetchAnnouncement}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-100 border border-green-300 text-green-700 text-sm font-bold mb-8 hover:bg-green-200 hover:scale-105 transition-all shadow-xl shadow-green-100/50 cursor-pointer animate-bounce"
             >
               🎉 Pengumuman Peserta Magang Diterima! Klik Disini
             </button>
-          )}
+          ) : null}
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground mb-6 leading-tight">
             Mulai Karir Profesional <br />
@@ -173,7 +190,7 @@ export default function Home() {
               onClick={() => {
                 document.getElementById('programs').scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-8 py-4 rounded-2xl bg-primary text-white font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 flex items-center gap-2 group"
+              className="px-8 py-4 rounded-2xl bg-red-900 text-white font-bold hover:bg-red-950 transition-all shadow-xl shadow-red-900/20 flex items-center gap-2 group"
             >
               Lihat Program <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
@@ -189,7 +206,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Programs Section - 5 PROGRAM MAGANG DENGAN DETAIL */}
+      {/* Programs Section */}
       <section id="programs" className="py-24 bg-accent/30">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -231,13 +248,13 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => openModal(program)}
-                    className="w-1/2 py-3 rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-all"
+                    className="w-1/2 py-3 rounded-xl border-2 border-red-900 text-red-900 font-bold hover:bg-red-50 transition-all"
                   >
                     Lihat Detail
                   </button>
                   <button
                     onClick={() => navigate('/register', { state: { programCode: program.program_code } })}
-                    className="w-1/2 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                    className="w-1/2 py-3 rounded-xl bg-red-900 text-white font-bold hover:bg-red-950 transition-all flex items-center justify-center gap-2"
                   >
                     Daftar <ArrowRight className="w-4 h-4" />
                   </button>
@@ -261,7 +278,6 @@ export default function Home() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Lokasi Penempatan */}
               <div>
                 <h3 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
                   <MapPin className="w-5 h-5" /> Lokasi Penempatan
@@ -281,13 +297,11 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Deskripsi Pekerjaan */}
               <div>
                 <h3 className="text-lg font-bold text-primary mb-2">📋 Deskripsi Pekerjaan</h3>
                 <p className="text-muted-foreground">{selectedProgram.description}</p>
               </div>
 
-              {/* Rincian Penugasan */}
               <div>
                 <h3 className="text-lg font-bold text-primary mb-2">📌 Rincian Penugasan/Tanggung Jawab</h3>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -339,7 +353,6 @@ export default function Home() {
                 </ul>
               </div>
 
-              {/* Kompetensi Teknis & Soft Skills */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-primary mb-2">💻 Kompetensi Teknis</h3>
@@ -371,7 +384,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Persyaratan Khusus */}
               <div>
                 <h3 className="text-lg font-bold text-primary mb-2">⚠️ Persyaratan Khusus</h3>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -383,7 +395,6 @@ export default function Home() {
                 </ul>
               </div>
 
-              {/* Capaian Pembelajaran */}
               <div className="bg-green-50 p-4 rounded-xl border border-green-200">
                 <h3 className="text-lg font-bold text-green-700 mb-2">🎓 Capaian Pembelajaran</h3>
                 <ul className="list-disc list-inside space-y-1 text-green-700">
@@ -401,7 +412,7 @@ export default function Home() {
                     closeModal();
                     navigate('/register', { state: { programCode: selectedProgram.program_code } });
                   }}
-                  className="flex-1 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all"
+                  className="flex-1 py-3 rounded-xl bg-red-900 text-white font-bold hover:bg-red-950 transition-all"
                 >
                   Daftar Sekarang
                 </button>
@@ -416,55 +427,62 @@ export default function Home() {
 
       {/* Modal Pengumuman */}
       {isAnnouncementModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
-          <div className="bg-card rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-6 flex justify-between items-center text-white">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
+          <div className="bg-card rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-8 flex justify-between items-start text-white">
               <div>
-                <h2 className="text-2xl font-bold">🎉 Pengumuman Magang</h2>
-                <p className="text-green-50 text-sm mt-1">Selamat! Berikut adalah daftar peserta yang diterima Periode 2026</p>
+                <h2 className="text-3xl font-bold">🎉 Pengumuman Peserta Magang</h2>
+                <p className="text-green-100 text-base mt-2">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
+                {!isLoadingAnnouncement && acceptedInterns.length > 0 && (
+                  <div className="mt-3 inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-sm font-bold">
+                    <Users className="w-4 h-4" />
+                    Total {acceptedInterns.length} Peserta Diterima
+                  </div>
+                )}
               </div>
-              <button onClick={() => setIsAnnouncementModalOpen(false)} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl transition-colors cursor-pointer">✕</button>
+              <button onClick={() => setIsAnnouncementModalOpen(false)} className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-2xl transition-colors cursor-pointer shrink-0 ml-4">✕</button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
+            <div className="p-8 overflow-y-auto flex-1 bg-gray-50/50">
               {isLoadingAnnouncement ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-                  <p className="text-gray-500 font-medium">Memuat data pengumuman...</p>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-green-600 mb-4"></div>
+                  <p className="text-gray-500 font-medium text-base">Memuat data pengumuman...</p>
                 </div>
               ) : acceptedInterns.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {acceptedInterns.map((intern, idx) => (
-                    <div key={intern.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-                      <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 font-bold flex items-center justify-center text-xl shrink-0">
+                    <div key={intern.id} className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4 hover:shadow-lg hover:border-green-200 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-white font-extrabold flex items-center justify-center text-xl shrink-0 shadow-md shadow-green-200">
                         {idx + 1}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-lg">{intern.name}</h3>
-                        <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                          <Building2 className="w-3.5 h-3.5" /> {intern.university}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-base truncate">{intern.name}</h3>
+                        <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1 truncate">
+                          <Building2 className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{intern.university || '-'}</span>
                         </p>
+                        {intern.major && (
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">{intern.major}</p>
+                        )}
                       </div>
-                      <div className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-bold uppercase tracking-wider">
-                        DITERIMA
+                      <div className="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0">
+                        ✓ DITERIMA
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-gray-900">Belum ada data</h3>
-                  <p className="text-gray-500 mt-1">Daftar peserta yang diterima belum diumumkan atau masih kosong.</p>
+                <div className="text-center py-16">
+                  <Users className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900">Belum ada data</h3>
+                  <p className="text-gray-500 mt-2">Daftar peserta yang diterima belum diumumkan atau masih kosong.</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-white border-t border-gray-100 flex justify-center">
-              <button
-                onClick={() => setIsAnnouncementModalOpen(false)}
-                className="px-8 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
-              >
+            <div className="p-5 bg-white border-t border-gray-100 flex justify-center">
+              <button onClick={() => setIsAnnouncementModalOpen(false)} className="px-10 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors cursor-pointer text-sm">
                 Tutup Pengumuman
               </button>
             </div>
@@ -472,7 +490,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Program Details Section - TANPA POSISI YANG DIBUKA */}
+      {/* Program Details Section */}
       <section className="py-24">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-16">
@@ -483,7 +501,6 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Left Column */}
             <div className="bg-card border border-border rounded-3xl p-8">
               <div>
                 <h3 className="font-bold mb-3 flex items-center gap-2">
@@ -509,14 +526,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column - Maps */}
             <div className="bg-card border border-border rounded-3xl overflow-hidden">
               <div className="p-6 pb-0">
                 <h3 className="text-2xl font-bold mb-2">Lokasi Kantor</h3>
                 <p className="text-muted-foreground">Kunjungi kami di dua lokasi strategis kami</p>
               </div>
 
-              {/* Rapier Tangerang */}
               <div className="p-6 border-b border-border">
                 <div className="flex items-start gap-3 mb-3">
                   <Building2 className="w-5 h-5 text-primary mt-0.5" />
@@ -538,7 +553,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Rapier Semarang */}
               <div className="p-6">
                 <div className="flex items-start gap-3 mb-3">
                   <Building2 className="w-5 h-5 text-primary mt-0.5" />
@@ -576,86 +590,34 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Contact Info - EMAIL BISA DIKLIK */}
               <div className="bg-card border border-border rounded-3xl p-8">
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
                   Hubungi Kami
                 </h3>
                 <div className="space-y-4">
-                  {/* EMAIL - Bisa langsung klik */}
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5" />
-                    <a
-                      href="mailto:contact@rapiertechnology.co.id"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
+                    <a href="mailto:contact@rapiertechnology.co.id" className="text-muted-foreground hover:text-primary transition-colors">
                       contact@rapiertechnology.co.id
                     </a>
                   </div>
-
-                  {/* WHATSAPP - Bisa langsung chat */}
                   <div className="flex items-center gap-3">
-                    <SocialIcon
-                      network="whatsapp"
-                      url="https://wa.me/6281297770484"
-                      bgColor="#25D366"
-                      fgColor="white"
-                      style={{ height: 28, width: 28 }}
-                      target="_blank"
-                    />
-                    <a
-                      href="https://wa.me/6281297770484"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
+                    <SocialIcon network="whatsapp" url="https://wa.me/6281297770484" bgColor="#25D366" fgColor="white" style={{ height: 28, width: 28 }} target="_blank" />
+                    <a href="https://wa.me/6281297770484" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                       +62 812-9777-0484
                     </a>
                   </div>
                 </div>
               </div>
 
-              {/* Social Media */}
               <div className="bg-card border border-border rounded-3xl p-8">
                 <h3 className="text-xl font-bold mb-6">Ikuti Kami di Sosial Media</h3>
                 <div className="flex flex-wrap gap-5">
-                  <SocialIcon
-                    network="instagram"
-                    url="https://www.instagram.com/rapiertechnology"
-                    bgColor="transparent"
-                    fgColor="#E4405F"
-                    style={{ height: 45, width: 45 }}
-                    target="_blank"
-                    className="hover:scale-110 transition-transform"
-                  />
-                  <SocialIcon
-                    network="linkedin"
-                    url="https://id.linkedin.com/company/rapitechindonesia"
-                    bgColor="transparent"
-                    fgColor="#0077B5"
-                    style={{ height: 45, width: 45 }}
-                    target="_blank"
-                    className="hover:scale-110 transition-transform"
-                  />
-                  <SocialIcon
-                    network="youtube"
-                    url="https://www.youtube.com/@RapierTechnology"
-                    bgColor="transparent"
-                    fgColor="#FF0000"
-                    style={{ height: 45, width: 45 }}
-                    target="_blank"
-                    className="hover:scale-110 transition-transform"
-                  />
-                  <SocialIcon
-                    network="tiktok"
-                    url="https://www.tiktok.com/@rapiertechnology"
-                    bgColor="transparent"
-                    fgColor="#000000"
-                    style={{ height: 45, width: 45 }}
-                    target="_blank"
-                    className="hover:scale-110 transition-transform"
-                  />
+                  <SocialIcon network="instagram" url="https://www.instagram.com/rapiertechnology" bgColor="transparent" fgColor="#E4405F" style={{ height: 45, width: 45 }} target="_blank" className="hover:scale-110 transition-transform" />
+                  <SocialIcon network="linkedin" url="https://id.linkedin.com/company/rapitechindonesia" bgColor="transparent" fgColor="#0077B5" style={{ height: 45, width: 45 }} target="_blank" className="hover:scale-110 transition-transform" />
+                  <SocialIcon network="youtube" url="https://www.youtube.com/@RapierTechnology" bgColor="transparent" fgColor="#FF0000" style={{ height: 45, width: 45 }} target="_blank" className="hover:scale-110 transition-transform" />
+                  <SocialIcon network="tiktok" url="https://www.tiktok.com/@rapiertechnology" bgColor="transparent" fgColor="#000000" style={{ height: 45, width: 45 }} target="_blank" className="hover:scale-110 transition-transform" />
                 </div>
               </div>
             </div>
@@ -667,9 +629,7 @@ export default function Home() {
       <footer className="py-12 border-t border-border">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <Briefcase className="text-white w-4 h-4" />
-            </div>
+            <img src="/logo rapier.jpg" alt="Rapier Technology Logo" className="h-9 w-auto object-contain" />
             <span className="font-bold">Rapier Intern</span>
           </div>
           <p className="text-sm text-muted-foreground">
