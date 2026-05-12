@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, FileText, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
+import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import api, { FILE_URL } from "@/api/axios";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,6 @@ const menuItems = [
     { icon: CheckCircle2, label: "Penugasan Mentor", path: "/master/mentor-interns", roles: ["admin"] },
     { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", roles: ["admin", "mentor"] },
     { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
-    { icon: FileText, label: "Jenis Laporan", path: "/master/report-types", roles: ["admin"] },
     { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
     { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["admin", "mentor", "student", "intern"] },
   ];

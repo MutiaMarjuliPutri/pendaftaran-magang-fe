@@ -12,7 +12,7 @@ import api from "@/api/axios";
 
 const schema = z.object({
   registration_id: z.string().min(1, "Peserta wajib dipilih"),
-  criterion_id: z.string().min(1, "Kriteria wajib dipilih"),
+  criteria_id: z.string().min(1, "Kriteria wajib dipilih"),
   score: z.coerce.number().min(0, "Nilai minimal 0").max(100, "Nilai maksimal 100"),
   notes: z.string().optional(),
 });
@@ -38,7 +38,7 @@ export default function Scores() {
 
   const onAdd = () => {
     setSelectedItem(null);
-    reset({ registration_id: "", criterion_id: "", score: 0, notes: "" });
+    reset({ registration_id: "", criteria_id: "", score: 0, notes: "" });
     setIsModalOpen(true);
   };
 
@@ -46,7 +46,7 @@ export default function Scores() {
     setSelectedItem(item);
     reset({
       registration_id: item.registration_id,
-      criterion_id: item.criterion_id,
+      criteria_id: item.criteria_id || item.criterion_id,
       score: item.score,
       notes: item.notes || "",
     });
@@ -69,13 +69,13 @@ export default function Scores() {
           <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
             <User size={14} className="text-muted-foreground" />
           </div>
-          <span className="font-semibold">{row.registration?.intern?.full_name || "N/A"}</span>
+          <span className="font-semibold">{row.registration?.intern?.name || "N/A"}</span>
         </div>
       ),
     },
     {
       header: "Kriteria",
-      cell: (row) => <span className="px-2 py-1 bg-muted rounded-lg text-xs font-medium">{row.assessment_criterion?.name || "-"}</span>,
+      cell: (row) => <span className="px-2 py-1 bg-muted rounded-lg text-xs font-medium">{row.criterion?.criteria_name || "-"}</span>,
     },
     {
       header: "Nilai",
@@ -131,7 +131,7 @@ export default function Scores() {
               <option value="">Pilih Peserta</option>
               {registrations?.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.intern?.full_name}
+                  {r.intern?.name}
                 </option>
               ))}
             </select>
@@ -139,15 +139,15 @@ export default function Scores() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Kriteria Penilaian</label>
-            <select {...register("criterion_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+            <select {...register("criteria_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
               <option value="">Pilih Kriteria</option>
               {criteria?.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} ({c.weight}%)
+                  {c.criteria_name}
                 </option>
               ))}
             </select>
-            {errors.criterion_id && <p className="text-xs text-destructive">{errors.criterion_id.message}</p>}
+            {errors.criteria_id && <p className="text-xs text-destructive">{errors.criteria_id.message}</p>}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Nilai (0 - 100)</label>

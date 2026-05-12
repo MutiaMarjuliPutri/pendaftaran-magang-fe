@@ -175,9 +175,9 @@ export default function AssessmentCriteria() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Status</label>
-            <select {...register("is_active")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value={true}>Aktif</option>
-              <option value={false}>Non-Aktif</option>
+            <select {...register("is_active", { setValueAs: (v) => v === "true" })} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+              <option value="true">Aktif</option>
+              <option value="false">Non-Aktif</option>
             </select>
           </div>
 

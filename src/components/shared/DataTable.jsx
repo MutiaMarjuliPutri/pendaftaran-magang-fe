@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -28,6 +28,15 @@ export default function DataTable({
 }) {
   let lastGroupValue = null;
   const [collapsedGroups, setCollapsedGroups] = React.useState({});
+  const debounceRef = useRef(null);
+
+  const handleSearch = (value) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSearch?.(value);
+    }, 400);
+  };
+
   const groupCounts = groupByKey
     ? data.reduce((acc, row) => {
         const key = row[groupByKey] || "Lainnya";
@@ -56,7 +65,7 @@ export default function DataTable({
             <input
               type="text"
               placeholder="Cari..."
-              onChange={(e) => onSearch?.(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="h-10 pl-10 pr-4 w-64 bg-card border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/5 focus:border-primary/20 transition-all"
             />
           </div>
