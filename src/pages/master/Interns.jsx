@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, Mail, Phone, GraduationCap } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import api from "@/api/axios";
+import { Edit2, Trash2, Mail, Phone, GraduationCap, Star } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,7 +29,19 @@ const schema = z.object({
 });
 
 export default function Interns() {
+  const queryClient = useQueryClient();
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/interns", "interns");
+
+  const toggleBestMutation = useMutation({
+    mutationFn: (id) => api.patch(`/master/interns/${id}/toggle-best`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["interns"]);
+      toast.success("Berhasil memperbarui status intern terbaik");
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Gagal memperbarui status intern terbaik");
+    },
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -81,7 +97,12 @@ export default function Interns() {
       header: "Nama Lengkap",
       cell: (row) => (
         <div className="flex flex-col">
-          <span className="font-bold">{row.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-bold">{row.name}</span>
+            {row.is_best_intern && (
+              <Star size={14} className="fill-amber-400 text-amber-400" />
+            )}
+          </div>
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{row.status}</span>
         </div>
       ),
@@ -141,6 +162,16 @@ export default function Interns() {
       className: "text-right",
       cell: (row) => (
         <div className="flex justify-end gap-2">
+          <button 
+            onClick={() => toggleBestMutation.mutate(row.id)} 
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              row.is_best_intern ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-50"
+            )}
+            title="Tandai sebagai Intern Terbaik"
+          >
+            <Star size={16} className={row.is_best_intern ? "fill-current" : ""} />
+          </button>
           <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
             <Edit2 size={16} />
           </button>

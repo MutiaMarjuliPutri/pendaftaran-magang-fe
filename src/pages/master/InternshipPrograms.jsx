@@ -3,7 +3,8 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Users, UserCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -106,9 +107,39 @@ export default function InternshipPrograms() {
       cell: (row) => <span className="text-sm font-medium px-2 py-1 bg-muted rounded-lg">{row.division?.name || "-"}</span>,
     },
     {
-      header: "Kuota",
-      accessorKey: "quota",
-      className: "text-center",
+      header: "Kuota & Pendaftar",
+      cell: (row) => {
+        const remaining = (row.quota || 0) - (row.total_accepted || 0);
+        const percent = (row.quota || 0) > 0 ? Math.round(((row.total_accepted || 0) / row.quota) * 100) : 0;
+        
+        return (
+          <div className="space-y-1.5 min-w-[140px]">
+            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-muted-foreground">Terisi: {row.total_accepted || 0}/{row.quota || 0}</span>
+              <span className={remaining <= 0 ? "text-rose-500 font-black" : "text-emerald-500 font-black"}>
+                Sisa: {remaining}
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-500",
+                  percent >= 100 ? "bg-rose-500" : percent >= 80 ? "bg-amber-500" : "bg-emerald-500"
+                )}
+                style={{ width: `${Math.min(percent, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Users size={10} /> {row.total_registrations || 0} Calon
+              </div>
+              {percent >= 100 && (
+                <span className="text-[9px] font-black text-rose-500 uppercase">Penuh</span>
+              )}
+            </div>
+          </div>
+        );
+      }
     },
     {
       header: "Batch",

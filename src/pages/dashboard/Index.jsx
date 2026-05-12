@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/api/axios'
+import { cn } from '@/lib/utils'
 
 const numberFormatter = new Intl.NumberFormat('id-ID')
 
@@ -100,6 +101,7 @@ const periodOptions = [
   { key: 'today', label: 'Hari ini', helper: 'hari ini' },
   { key: 'week', label: 'Minggu ini', helper: 'minggu ini' },
   { key: 'month', label: 'Bulan ini', helper: 'bulan ini' },
+  { key: 'all', label: 'Seluruh Waktu', helper: 'seluruh waktu' },
 ]
 
 export default function Dashboard() {
@@ -127,6 +129,8 @@ export default function Dashboard() {
   const statusChart = charts.registrations_by_status || []
   const topPrograms = charts.top_programs_by_registrations || []
   const latestRegistrations = dashboard?.latest_registrations || []
+  const bestInterns = dashboard?.best_interns || []
+  const pendingLists = dashboard?.pending_lists || { log_books: [], reports: [] }
   const totalStatusRegistrations = statusChart.reduce((total, item) => total + Number(item.total || 0), 0)
   const maxStatusTotal = Math.max(...statusChart.map((item) => Number(item.total || 0)), 1)
 
@@ -225,6 +229,28 @@ export default function Dashboard() {
         )}
       </div>
 
+      {bestInterns.length > 0 && (
+        <div className="space-y-4">
+          <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Star size={16} className="fill-amber-400 text-amber-400" /> Intern Terbaik Per Batch
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {bestInterns.map((intern) => (
+              <div key={intern.id} className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/5 to-amber-500/10 border border-amber-500/20 shadow-sm relative overflow-hidden group">
+                <div className="absolute -right-4 -top-4 text-amber-500/10 group-hover:scale-110 transition-transform">
+                  <Star size={80} />
+                </div>
+                <div className="relative z-10">
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Batch {intern.batch}</p>
+                  <h5 className="font-bold text-foreground mb-1 truncate">{intern.name}</h5>
+                  <p className="text-xs text-muted-foreground truncate">{intern.university}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {(user?.role?.toLowerCase() === 'student' || user?.role === 'Intern') && (
         <div className="space-y-8">
           {!user?.registration ? (
@@ -249,7 +275,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <>
+            <div className="space-y-8">
               {/* Status Card Utama */}
               <div className="bg-card rounded-[40px] border border-border shadow-2xl overflow-hidden relative group">
                 <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -346,12 +372,12 @@ export default function Dashboard() {
                              <FileCheck size={120} />
                            </div>
                            <p className="text-base leading-relaxed text-foreground/80 italic relative z-10">
-                              "{user.registration?.status === 'pending' ? 'Harap bersabar. Tim kami sedang meninjau ribuan berkas yang masuk untuk memilih talenta terbaik seperti Anda.' :
-                                user.registration?.status === 'accepted' ? 'Selamat! Anda terpilih. Mohon siapkan dokumen identitas asli Anda untuk proses administrasi selanjutnya.' :
-                                user.registration?.status === 'rejected' ? 'Terima kasih atas minat Anda. Jangan berkecil hati, asah terus kemampuan Anda dan coba lagi di gelombang berikutnya.' :
-                                'Cek email Anda secara berkala untuk jadwal interview atau informasi tambahan lainnya.'}"
+                               "{user.registration?.status === 'pending' ? 'Harap bersabar. Tim kami sedang meninjau ribuan berkas yang masuk untuk memilih talenta terbaik seperti Anda.' :
+                                 user.registration?.status === 'accepted' ? 'Selamat! Anda terpilih. Mohon siapkan dokumen identitas asli Anda untuk proses administrasi selanjutnya.' :
+                                 user.registration?.status === 'rejected' ? 'Terima kasih atas minat Anda. Jangan berkecil hati, asah terus kemampuan Anda dan coba lagi di gelombang berikutnya.' :
+                                 'Cek email Anda secara berkala untuk jadwal interview atau informasi tambahan lainnya.'}"
                            </p>
-                           
+
                            {user.registration?.status === 'accepted' && (
                              <div className="mt-8 grid grid-cols-2 gap-4 relative z-10">
                                <Link to="/master/log-books" className="flex items-center justify-center gap-2 p-4 bg-primary text-primary-foreground rounded-2xl font-bold hover:scale-105 transition-transform shadow-lg shadow-primary/20">
@@ -377,10 +403,10 @@ export default function Dashboard() {
                    </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
-        </div>
-      )}
+          </div>
+        )}
 
       {isStaff && (
         <>
@@ -494,30 +520,71 @@ export default function Dashboard() {
             ) : (
               <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
                 <h3 className="text-xl font-bold mb-6">Tugas Bimbingan</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Link to="/master/log-books" className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
-                        <ClipboardList size={24} />
+
+                
+                {isMentor && (
+                  <div className="mt-8 space-y-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Logbook Perlu Validasi</h4>
+                        <Link to="/master/log-books" className="text-xs font-bold text-primary hover:underline">Lihat Semua</Link>
                       </div>
-                      <div>
-                        <p className="text-3xl font-black text-amber-600">{formatNumber(overview.waiting_log_books)}</p>
-                        <p className="text-sm font-bold text-amber-700">Logbook Perlu Validasi</p>
+                      <div className="grid gap-3">
+                        {pendingLists.log_books.map((lb) => (
+                          <div key={lb.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30 group hover:bg-muted/50 transition-all">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                <ClipboardList size={18} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold">{lb.title}</p>
+                                <p className="text-xs text-muted-foreground">Oleh: {lb.user?.full_name}</p>
+                              </div>
+                            </div>
+                            <Link to="/master/log-books" className="p-2 rounded-lg bg-background border border-border opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ArrowUpRight size={14} />
+                            </Link>
+                          </div>
+                        ))}
+                        {!pendingLists.log_books.length && (
+                          <div className="text-center py-6 border border-dashed rounded-xl text-xs text-muted-foreground">
+                            Tidak ada logbook yang perlu divalidasi.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </Link>
-                  <Link to="/master/reports" className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/15 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                        <FileText size={24} />
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Laporan Baru</h4>
+                        <Link to="/master/reports" className="text-xs font-bold text-primary hover:underline">Lihat Semua</Link>
                       </div>
-                      <div>
-                        <p className="text-3xl font-black text-indigo-600">{formatNumber(overview.submitted_reports)}</p>
-                        <p className="text-sm font-bold text-indigo-700">Laporan Baru Masuk</p>
+                      <div className="grid gap-3">
+                        {pendingLists.reports.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30 group hover:bg-muted/50 transition-all">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                                <FileText size={18} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold">{r.title}</p>
+                                <p className="text-xs text-muted-foreground">Oleh: {r.intern?.name}</p>
+                              </div>
+                            </div>
+                            <Link to="/master/reports" className="p-2 rounded-lg bg-background border border-border opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ArrowUpRight size={14} />
+                            </Link>
+                          </div>
+                        ))}
+                        {!pendingLists.reports.length && (
+                          <div className="text-center py-6 border border-dashed rounded-xl text-xs text-muted-foreground">
+                            Tidak ada laporan baru.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </Link>
-                </div>
+                  </div>
+                )}
                 
                 <div className="mt-8">
                   <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Akses Cepat</h4>
@@ -578,14 +645,34 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground mb-6">Top program berdasarkan jumlah pendaftar</p>
                 <div className="space-y-4">
                   {topPrograms.map((program) => (
-                    <div key={program.id} className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
-                      <div className="min-w-0">
-                        <p className="font-bold truncate">{program.program_name}</p>
-                        <p className="text-xs text-muted-foreground">{program.program_code} - Kuota {formatNumber(program.quota)}</p>
+                    <div key={program.id} className="flex flex-col gap-4 rounded-2xl border border-border p-5 hover:border-primary/20 transition-colors bg-card/50">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="font-bold truncate text-sm">{program.program_name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{program.program_code}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xl font-black tracking-tighter">{formatNumber(program.total_registrations)}</p>
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase">Pendaftar</p>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-2xl font-bold">{formatNumber(program.total_registrations)}</p>
-                        <p className="text-xs text-muted-foreground">pendaftar</p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span className="text-muted-foreground uppercase">Kapasitas Terisi</span>
+                          <span className={((program.quota || 0) - (program.total_accepted || 0)) <= 0 ? "text-rose-500" : "text-primary"}>
+                            {program.total_accepted || 0} / {program.quota || 0}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={cn(
+                              "h-full transition-all duration-1000",
+                              (program.total_accepted / program.quota) >= 1 ? "bg-rose-500" : "bg-primary"
+                            )}
+                            style={{ width: `${Math.min(((program.total_accepted || 0) / (program.quota || 1)) * 100, 100)}%` }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
                   ))}

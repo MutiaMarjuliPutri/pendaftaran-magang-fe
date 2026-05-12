@@ -55,6 +55,19 @@ export default function LogBooks() {
     },
   });
 
+  const bulkValidateMutation = useMutation({
+    mutationFn: ({ ids, validation }) => api.post(`/master/log-books/bulk-validate`, { ids, validation }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["log-books"]);
+      toast.success("Berhasil melakukan validasi massal");
+      setSelectedIds([]);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Gagal melakukan validasi massal");
+    },
+  });
+
+  const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -228,6 +241,37 @@ export default function LogBooks() {
   };
 
   const columns = [
+    ...(isMentor ? [{
+      header: (
+        <input 
+          type="checkbox" 
+          checked={selectedIds.length === data?.length && data?.length > 0}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedIds(data?.map(row => row.id) || []);
+            } else {
+              setSelectedIds([]);
+            }
+          }}
+          className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4"
+        />
+      ),
+      cell: (row) => (
+        <input 
+          type="checkbox"
+          checked={selectedIds.includes(row.id)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedIds(prev => [...prev, row.id]);
+            } else {
+              setSelectedIds(prev => prev.filter(id => id !== row.id));
+            }
+          }}
+          className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4"
+        />
+      ),
+      className: "w-10 px-6",
+    }] : []),
     { 
       header: "No", 
       cell: (row) => <div className="text-center text-sm">{row.no}</div> 
@@ -371,7 +415,41 @@ export default function LogBooks() {
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
-      />
+      >
+        {isMentor && selectedIds.length > 0 && (
+          <div className="flex items-center gap-4 p-4 bg-primary/5 border border-primary/20 rounded-2xl animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                {selectedIds.length}
+              </span>
+              <p className="text-sm font-medium">Logbook terpilih</p>
+            </div>
+            <div className="h-6 w-px bg-primary/20 mx-2"></div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => bulkValidateMutation.mutate({ ids: selectedIds, validation: 'approved' })}
+                disabled={bulkValidateMutation.isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <CheckCircle size={16} /> Setujui Semua
+              </button>
+              <button
+                onClick={() => bulkValidateMutation.mutate({ ids: selectedIds, validation: 'rejected' })}
+                disabled={bulkValidateMutation.isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-rose-600 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <XCircle size={16} /> Tolak Semua
+              </button>
+              <button
+                onClick={() => setSelectedIds([])}
+                className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-xl transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
+      </DataTable>
 
       {isStudent && !isAccepted && (
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">

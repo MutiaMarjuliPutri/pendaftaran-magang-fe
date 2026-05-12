@@ -4,6 +4,7 @@ import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
 import { Edit2, Trash2, Radio } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,7 +18,7 @@ const schema = z.object({
   registration_end: z.string().min(1, "Tanggal selesai pendaftaran wajib diisi"),
   program_start: z.string().min(1, "Tanggal mulai program wajib diisi"),
   program_end: z.string().min(1, "Tanggal selesai program wajib diisi"),
-  quota_total: z.coerce.number().min(1, "Kuota minimal 1"),
+  quota_total: z.coerce.number().min(0, "Kuota tidak boleh negatif"),
   is_active: z.boolean().default(true),
   registration_status: z.enum(["open", "closed", "announced"]).default("open"),
 });
@@ -99,14 +100,33 @@ export default function InternshipPeriods() {
       ),
     },
     {
-      header: "Kuota",
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <span className="font-bold">{row.quota_remaining}</span>
-          <span className="text-muted-foreground">/</span>
-          <span>{row.quota_total}</span>
-        </div>
-      ),
+      header: "Kapasitas Terisi",
+      cell: (row) => {
+        const total_accepted = row.total_accepted || 0;
+        const total_quota = row.quota_total || 0;
+        const remaining = total_quota - total_accepted;
+        const percent = total_quota > 0 ? Math.round((total_accepted / total_quota) * 100) : 0;
+        
+        return (
+          <div className="space-y-1.5 min-w-[140px]">
+            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-muted-foreground">Terisi: {total_accepted}/{total_quota}</span>
+              <span className={remaining <= 0 && total_quota > 0 ? "text-rose-500" : "text-emerald-500"}>
+                Sisa: {remaining}
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-500",
+                  percent >= 100 ? "bg-rose-500" : percent >= 80 ? "bg-amber-500" : "bg-primary"
+                )}
+                style={{ width: `${Math.min(percent, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       header: "Status Periode",
