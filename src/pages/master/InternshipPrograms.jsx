@@ -101,10 +101,14 @@ export default function InternshipPrograms() {
 
   const columns = [
     { header: "Kode", accessorKey: "program_code", className: "font-mono text-xs" },
-    { header: "Nama Program", accessorKey: "program_name", className: "font-semibold" },
-    {
-      header: "Divisi",
-      cell: (row) => <span className="text-sm font-medium px-2 py-1 bg-muted rounded-lg">{row.division?.name || "-"}</span>,
+    { 
+      header: "Nama Program & Divisi", 
+      cell: (row) => (
+        <div className="flex flex-col">
+          <span className="font-semibold">{row.program_name}</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Divisi: {row.division?.name || "-"}</span>
+        </div>
+      )
     },
     {
       header: "Kuota & Pendaftar",
@@ -243,6 +247,7 @@ export default function InternshipPrograms() {
                 className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
                 placeholder="Contoh: Fullstack Web Development"
               />
+              <p className="text-[10px] text-muted-foreground">Nama spesifik kegiatan magang (Batch/Batch Batch).</p>
               {errors.program_name && <p className="text-xs text-destructive">{errors.program_name.message}</p>}
             </div>
 
@@ -256,6 +261,7 @@ export default function InternshipPrograms() {
                   </option>
                 ))}
               </select>
+              <p className="text-[10px] text-muted-foreground">Departemen/Bagian yang menaungi program ini.</p>
               {errors.department_id && <p className="text-xs text-destructive">{errors.department_id.message}</p>}
             </div>
 

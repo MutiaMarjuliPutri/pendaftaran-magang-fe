@@ -170,7 +170,7 @@ export default function Home() {
           ) : periodStatus === 'announced' ? (
             <button
               onClick={fetchAnnouncement}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-100 border border-green-300 text-green-700 text-sm font-bold mb-8 hover:bg-green-200 hover:scale-105 transition-all shadow-xl shadow-green-100/50 cursor-pointer animate-bounce"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-red-50 border border-red-200 text-red-900 text-sm font-bold mb-8 hover:bg-red-100 hover:scale-105 transition-all shadow-xl shadow-red-900/10 cursor-pointer animate-bounce"
             >
               🎉 Pengumuman Peserta Magang Diterima! Klik Disini
             </button>
@@ -429,10 +429,10 @@ export default function Home() {
       {isAnnouncementModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
           <div className="bg-card rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-8 flex justify-between items-start text-white">
+            <div className="bg-gradient-to-r from-red-900 to-red-800 p-8 flex justify-between items-start text-white">
               <div>
                 <h2 className="text-3xl font-bold">🎉 Pengumuman Peserta Magang</h2>
-                <p className="text-green-100 text-base mt-2">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
+                <p className="text-red-100 text-base mt-2">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
                 {!isLoadingAnnouncement && acceptedInterns.length > 0 && (
                   <div className="mt-3 inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-sm font-bold">
                     <Users className="w-4 h-4" />
@@ -446,14 +446,14 @@ export default function Home() {
             <div className="p-8 overflow-y-auto flex-1 bg-gray-50/50">
               {isLoadingAnnouncement ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                  <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-green-600 mb-4"></div>
+                  <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-red-900 mb-4"></div>
                   <p className="text-gray-500 font-medium text-base">Memuat data pengumuman...</p>
                 </div>
               ) : acceptedInterns.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {acceptedInterns.map((intern, idx) => (
-                    <div key={intern.id} className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4 hover:shadow-lg hover:border-green-200 transition-all duration-300">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-white font-extrabold flex items-center justify-center text-xl shrink-0 shadow-md shadow-green-200">
+                    <div key={intern.id} className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4 hover:shadow-lg hover:border-red-200 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-700 to-red-900 text-white font-extrabold flex items-center justify-center text-xl shrink-0 shadow-md shadow-red-100">
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -466,7 +466,7 @@ export default function Home() {
                           <p className="text-xs text-gray-400 mt-0.5 truncate">{intern.major}</p>
                         )}
                       </div>
-                      <div className="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0">
+                      <div className="px-3 py-1.5 bg-red-50 text-red-900 border border-red-100 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0">
                         ✓ DITERIMA
                       </div>
                     </div>

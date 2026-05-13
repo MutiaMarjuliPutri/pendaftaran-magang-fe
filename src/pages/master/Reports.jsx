@@ -25,7 +25,10 @@ const schema = z.object({
 export default function Reports() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isStudent = user?.role?.toLowerCase() === 'student' || user?.role?.toLowerCase() === 'intern';
+  const rawRole = typeof user?.role === 'object' ? user.role?.name : user?.role;
+  const userRole = rawRole?.toLowerCase();
+  const isStudent = userRole === 'student' || userRole === 'intern';
+  const isMentor = userRole === 'mentor';
   const isAccepted = user?.registration?.status?.toLowerCase() === 'accepted';
   
   const { data, isLoading, pagination, setParams, createMutation, deleteMutation } = useCrud("/master/reports", "reports");
@@ -142,7 +145,7 @@ export default function Reports() {
       header: "Status",
       cell: (row) => (
         <div className="flex items-center">
-          {(!isStudent) ? (
+          {(isMentor) ? (
             <select
               value={row.status || "submitted"}
               onChange={(e) => updateStatusMutation.mutate({ id: row.id, status: e.target.value })}
@@ -224,7 +227,7 @@ export default function Reports() {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onAdd={isStudent ? (isAccepted ? onAdd : null) : onAdd}
+        onAdd={isStudent && isAccepted ? onAdd : null}
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}

@@ -4,6 +4,9 @@ import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList,
 import { useAuthStore } from "@/store/authStore";
 import api, { FILE_URL } from "@/api/axios";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { id } from "date-fns/locale";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
@@ -20,7 +23,7 @@ const menuItems = [
     { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", roles: ["admin", "mentor"] },
     { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
     { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
-    { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["admin", "mentor", "student", "intern"] },
+    { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["mentor", "student", "intern"] },
   ];
 
 export default function DashboardLayout() {
@@ -29,6 +32,34 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuthStore();
+  const queryClient = useQueryClient();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const { data: notifications, refetch: refetchNotifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const response = await api.get("/master/notifications");
+      return response.data.data;
+    },
+    refetchInterval: 30000, // Polling setiap 30 detik
+    enabled: !!user
+  });
+
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => api.patch("/master/notifications/read-all"),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications"]);
+    }
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (id) => api.patch(`/master/notifications/${id}/read`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications"]);
+    }
+  });
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -169,21 +200,70 @@ export default function DashboardLayout() {
         {/* Header */}
         <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-40">
           <div className="flex items-center gap-4 flex-1 max-w-xl">
-            <div className="relative w-full group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <input
-                type="text"
-                placeholder="Cari sesuatu..."
-                className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5"
-              />
-            </div>
+            {/* Pencarian global dihapus karena membingungkan, pencarian spesifik tersedia di tiap tabel master */}
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 rounded-xl hover:bg-muted relative transition-colors">
-              <Bell size={20} className="text-muted-foreground" />
-              <span className="absolute top-2 right-2.5 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className="p-2 rounded-xl hover:bg-muted relative transition-colors"
+              >
+                <Bell size={20} className="text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2.5 w-4 h-4 bg-destructive text-white text-[10px] font-bold rounded-full border-2 border-card flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isNotificationOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-card border border-border shadow-xl rounded-2xl overflow-hidden z-50">
+                  <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+                    <h3 className="font-bold text-sm">Notifikasi</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={() => markAllReadMutation.mutate()}
+                        className="text-[10px] text-primary hover:underline font-semibold"
+                      >
+                        Tandai semua dibaca
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                    {notifications?.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <Bell size={24} className="mx-auto mb-2 opacity-20" />
+                        <p className="text-xs">Tidak ada notifikasi</p>
+                      </div>
+                    ) : (
+                      notifications?.map((n) => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => {
+                            if (!n.is_read) markReadMutation.mutate(n.id);
+                            // Bisa tambah navigasi ke halaman terkait di sini
+                          }}
+                          className={cn(
+                            "p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors last:border-0",
+                            !n.is_read && "bg-primary/5"
+                          )}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <p className="text-xs font-bold">{n.title}</p>
+                            {!n.is_read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1"></div>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{n.message}</p>
+                          <p className="text-[9px] text-muted-foreground mt-2 font-medium">
+                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: id })}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="h-8 w-px bg-border mx-2"></div>
             <Link to="/profile" className="flex items-center gap-3 pl-2 hover:bg-muted p-1.5 rounded-xl transition-all">
               <div className="text-right hidden sm:block">
