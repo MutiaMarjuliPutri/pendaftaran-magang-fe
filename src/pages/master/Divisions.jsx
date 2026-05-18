@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useCrud } from "@/hooks/useCrud";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import api from "@/api/axios";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
@@ -14,7 +17,19 @@ const divisionSchema = z.object({
 });
 
 export default function Divisions() {
+  const queryClient = useQueryClient();
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/divisions", "divisions");
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => api.patch(`/master/divisions/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["divisions"]);
+      toast.success("Status divisi berhasil diperbarui");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Gagal memperbarui status");
+    },
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -65,11 +80,31 @@ export default function Divisions() {
     { header: "Nama Divisi", accessorKey: "name", className: "font-semibold" },
     {
       header: "Status",
-      cell: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.status === "active" ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
-          {row.status === "active" ? "Aktif" : "Tidak Aktif"}
-        </span>
-      ),
+      cell: (row) => {
+        const isActive = row.status === "active";
+        return (
+          <button
+            onClick={() => {
+              const newStatus = isActive ? "inactive" : "active";
+              statusMutation.mutate({ id: row.id, status: newStatus });
+            }}
+            disabled={statusMutation.isLoading}
+            className="flex items-center gap-2 outline-none group"
+            title={isActive ? "Klik untuk nonaktifkan" : "Klik untuk aktifkan"}
+          >
+            <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ${
+              isActive ? "bg-[#3D2925]" : "bg-gray-200 border border-gray-300"
+            }`}>
+              <div className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-transform duration-300 ${
+                isActive ? "translate-x-5" : "translate-x-0"
+              }`} />
+            </div>
+            <span className="text-sm font-medium">
+              {isActive ? "Aktif" : "Tidak Aktif"}
+            </span>
+          </button>
+        );
+      },
     },
     {
       header: "Aksi",

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useCrud } from "@/hooks/useCrud";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import api from "@/api/axios";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
@@ -18,7 +21,19 @@ const schema = z.object({
 });
 
 export default function AssessmentCriteria() {
+  const queryClient = useQueryClient();
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/assessment-criteria", "assessment-criteria", { per_page: 50 });
+
+  const activeStatusMutation = useMutation({
+    mutationFn: ({ id, is_active }) => api.patch(`/master/assessment-criteria/${id}/active-status`, { is_active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["assessment-criteria"]);
+      toast.success("Status kriteria berhasil diperbarui");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Gagal memperbarui status");
+    },
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -93,7 +108,18 @@ export default function AssessmentCriteria() {
     { header: "Deskripsi", accessorKey: "description", className: "text-muted-foreground italic text-xs max-w-[200px] truncate" },
     {
       header: "Status",
-      cell: (row) => <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>{row.is_active ? "Aktif" : "Non-Aktif"}</span>,
+      cell: (row) => (
+        <button
+          onClick={() => activeStatusMutation.mutate({ id: row.id, is_active: !row.is_active })}
+          className="flex items-center gap-2 outline-none"
+          disabled={activeStatusMutation.isLoading}
+        >
+          <div className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${row.is_active ? "bg-[#3D2925]" : "bg-gray-200 border border-gray-300"}`}>
+            <div className={`absolute top-[2px] left-[2px] w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm ${row.is_active ? "translate-x-5" : "translate-x-0"}`} />
+          </div>
+          <span className="text-sm font-medium">{row.is_active ? "Aktif" : "Non-Aktif"}</span>
+        </button>
+      ),
     },
     {
       header: "Aksi",

@@ -40,6 +40,7 @@ export default function LogBooks() {
   const isAdmin = !isStudent && !isMentor;
   const currentUserId = user?.id || user?.user_id;
   const isAccepted = user?.registration?.status?.toLowerCase() === "accepted";
+  const isInternActive = user?.intern_status === "active" || !user?.intern_status;
 
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/log-books", "log-books");
 
@@ -372,7 +373,7 @@ export default function LogBooks() {
       header: "Aksi",
       className: "text-right",
       cell: (row) => {
-        const canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId));
+        const canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId) && isInternActive);
 
         if (!canManage) {
           return <span className="text-xs text-gray-400">-</span>;
@@ -411,7 +412,7 @@ export default function LogBooks() {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onAdd={isStudent ? (isAccepted ? onAdd : null) : onAdd}
+        onAdd={isStudent ? (isAccepted && isInternActive ? onAdd : null) : onAdd}
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
@@ -465,7 +466,19 @@ export default function LogBooks() {
           </div>
         </div>
       )}
-
+      {isStudent && isAccepted && !isInternActive && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+            <CheckCircle size={20} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-amber-900">Program Magang Selesai</h4>
+            <p className="text-xs text-amber-700 mt-1">
+              Anda telah menyelesaikan program magang Anda. Fitur tambah dan edit log book saat ini telah dinonaktifkan.
+            </p>
+          </div>
+        </div>
+      )}
       <FormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

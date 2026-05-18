@@ -294,7 +294,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-4">
-                      <div className={`px-10 py-4 rounded-3xl text-xl font-black uppercase tracking-tighter shadow-2xl animate-pulse ${
+                      <div className={`px-6 py-2.5 rounded-2xl text-sm font-bold uppercase tracking-wide shadow-xl animate-pulse ${
                         user.registration?.status === 'accepted' ? 'bg-emerald-500 text-white' :
                         user.registration?.status === 'rejected' ? 'bg-rose-500 text-white' :
                         'bg-amber-400 text-amber-950'
@@ -706,12 +706,6 @@ export default function Dashboard() {
           )}
         </>
       )}
-      <div className="mt-20 p-4 bg-muted/20 rounded-xl border border-dashed border-border text-[10px] text-muted-foreground flex items-center gap-4">
-        <span>Debug: Role [{userRole}]</span>
-        <span>Staff [{isStaff ? 'Yes' : 'No'}]</span>
-        <span>Bimbingan [{overview.global_active_interns || 0}]</span>
-        <span>User ID [{user?.id || '?'}]</span>
-      </div>
     </div>
   )
 }

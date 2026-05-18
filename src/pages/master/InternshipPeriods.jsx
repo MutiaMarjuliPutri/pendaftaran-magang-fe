@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useCrud } from "@/hooks/useCrud";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import api from "@/api/axios";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
@@ -24,7 +27,19 @@ const schema = z.object({
 });
 
 export default function InternshipPeriods() {
+  const queryClient = useQueryClient();
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/internship-periods", "internship-periods");
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, is_active }) => api.patch(`/master/internship-periods/${id}/active-status`, { is_active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["internship-periods"]);
+      toast.success("Status periode berhasil diperbarui");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Gagal memperbarui status");
+    },
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -130,7 +145,30 @@ export default function InternshipPeriods() {
     },
     {
       header: "Status Periode",
-      cell: (row) => <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>{row.is_active ? "Aktif" : "Tidak Aktif"}</span>,
+      cell: (row) => {
+        const isActive = !!row.is_active;
+        return (
+          <button
+            onClick={() => {
+              statusMutation.mutate({ id: row.id, is_active: !isActive });
+            }}
+            disabled={statusMutation.isLoading}
+            className="flex items-center gap-2 outline-none group"
+            title={isActive ? "Klik untuk nonaktifkan" : "Klik untuk aktifkan"}
+          >
+            <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ${
+              isActive ? "bg-[#3D2925]" : "bg-gray-200 border border-gray-300"
+            }`}>
+              <div className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-transform duration-300 ${
+                isActive ? "translate-x-5" : "translate-x-0"
+              }`} />
+            </div>
+            <span className="text-sm font-medium">
+              {isActive ? "Aktif" : "Tidak Aktif"}
+            </span>
+          </button>
+        );
+      },
     },
     {
       header: "Status Pendaftaran",

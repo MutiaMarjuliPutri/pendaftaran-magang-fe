@@ -31,11 +31,11 @@ export default function Home() {
       try {
         const response = await api.get('/public/current-period');
         const period = response.data?.data;
-        setPeriodStatus(period?.registration_status || 'open');
+        setPeriodStatus(period?.registration_status || 'closed');
         setCurrentPeriod(period);
       } catch (error) {
         console.error('Gagal mengambil status periode', error);
-        setPeriodStatus('open');
+        setPeriodStatus('closed');
       } finally {
         setIsLoadingStatus(false);
       }
@@ -245,7 +245,9 @@ export default function Home() {
                 <div className="space-y-4 mb-8">
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span>Reg: {new Date(program.registration_start).toLocaleDateString()} - {new Date(program.registration_end).toLocaleDateString()}</span>
+                    <span>Reg: {currentPeriod?.registration_start && currentPeriod?.registration_end
+                      ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      : `${new Date(program.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(program.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <Users className="w-4 h-4 text-primary" />
@@ -268,8 +270,8 @@ export default function Home() {
                     disabled={periodStatus !== 'open'}
                     onClick={() => navigate('/register', { state: { programCode: program.program_code } })}
                     className={`w-1/2 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${periodStatus === 'open'
-                        ? "bg-red-900 text-white hover:bg-red-950"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      ? "bg-red-900 text-white hover:bg-red-950"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
                       }`}
                   >
                     {periodStatus === 'open' ? 'Daftar' : 'Ditutup'} {periodStatus === 'open' && <ArrowRight className="w-4 h-4" />}
@@ -283,44 +285,44 @@ export default function Home() {
 
       {/* Modal Detail Program */}
       {isModalOpen && selectedProgram && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
-          <div className="bg-card rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-card border-b border-border p-6 flex justify-between items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
+          <div className="bg-card rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-card border-b border-border p-6 md:p-8 flex justify-between items-center z-10">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-primary/60">{selectedProgram.program_code}</span>
-                <h2 className="text-2xl font-bold">{selectedProgram.program_name}</h2>
+                <span className="text-sm font-bold uppercase tracking-widest text-primary/60">{selectedProgram.program_code}</span>
+                <h2 className="text-3xl font-extrabold mt-1">{selectedProgram.program_name}</h2>
               </div>
-              <button onClick={closeModal} className="w-10 h-10 rounded-full bg-accent hover:bg-accent/80 flex items-center justify-center text-2xl">✕</button>
+              <button onClick={closeModal} className="w-12 h-12 rounded-full bg-accent hover:bg-accent/80 flex items-center justify-center text-2xl transition-colors">✕</button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 md:p-8 space-y-8">
               <div>
-                <h3 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5" /> Lokasi Penempatan
+                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                  <MapPin className="w-6 h-6" /> Lokasi Penempatan
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-accent/20 p-4 rounded-xl">
-                    <p className="font-semibold">📍 Tangerang</p>
-                    <p className="text-sm text-muted-foreground mt-1">JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129</p>
+                  <div className="bg-accent/20 p-5 rounded-2xl">
+                    <p className="text-lg font-bold">📍 Tangerang</p>
+                    <p className="text-base text-muted-foreground mt-2">JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129</p>
                   </div>
-                  <div className="bg-accent/20 p-4 rounded-xl">
-                    <p className="font-semibold">📍 Semarang</p>
-                    <p className="text-sm text-muted-foreground mt-1">JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278</p>
+                  <div className="bg-accent/20 p-5 rounded-2xl">
+                    <p className="text-lg font-bold">📍 Semarang</p>
+                    <p className="text-base text-muted-foreground mt-2">JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278</p>
                   </div>
                 </div>
-                <div className="mt-3 text-sm text-muted-foreground">
-                  <span className="font-semibold">🏠 Tempat Tinggal:</span> Tidak disediakan
+                <div className="mt-4 text-base text-muted-foreground">
+                  <span className="font-semibold text-foreground">🏠 Tempat Tinggal:</span> Tidak disediakan
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-primary mb-2">📋 Deskripsi Pekerjaan</h3>
-                <p className="text-muted-foreground">{selectedProgram.description}</p>
+                <h3 className="text-xl font-bold text-primary mb-3">📋 Deskripsi Pekerjaan</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">{selectedProgram.description}</p>
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-primary mb-2">📌 Rincian Penugasan/Tanggung Jawab</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <h3 className="text-xl font-bold text-primary mb-3">📌 Rincian Penugasan/Tanggung Jawab</h3>
+                <ul className="list-disc list-inside space-y-2 text-lg text-muted-foreground">
                   {selectedProgram.id === 1 && (
                     <>
                       <li>Membangun komponen UI menggunakan React.js dan Tailwind CSS</li>
@@ -369,10 +371,10 @@ export default function Home() {
                 </ul>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-bold text-primary mb-2">💻 Kompetensi Teknis</h3>
-                  <div className="flex flex-wrap gap-2">
+                  <h3 className="text-xl font-bold text-primary mb-4">💻 Kompetensi Teknis</h3>
+                  <div className="flex flex-wrap gap-3">
                     {selectedProgram.id === 1 && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
                       <span key={i} className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">{skill}</span>
                     ))}
@@ -391,18 +393,18 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-primary mb-2">🤝 Soft Skills</h3>
-                  <div className="flex flex-wrap gap-2">
+                  <h3 className="text-xl font-bold text-primary mb-4">🤝 Soft Skills</h3>
+                  <div className="flex flex-wrap gap-3">
                     {['Komunikasi', 'Kerja Tim', 'Pemecahan Masalah', 'Manajemen Waktu', 'Adaptif'].map((skill, i) => (
-                      <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{skill}</span>
+                      <span key={i} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">{skill}</span>
                     ))}
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-primary mb-2">⚠️ Persyaratan Khusus</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <h3 className="text-xl font-bold text-primary mb-3">⚠️ Persyaratan Khusus</h3>
+                <ul className="list-disc list-inside space-y-2 text-lg text-muted-foreground">
                   <li>Mahasiswa aktif semester 6 atau lebih</li>
                   <li>Memiliki laptop pribadi</li>
                   <li>Kesiapan untuk belajar secara mandiri</li>
@@ -411,9 +413,9 @@ export default function Home() {
                 </ul>
               </div>
 
-              <div className="bg-green-50 p-4 rounded-xl border border-green-200">
-                <h3 className="text-lg font-bold text-green-700 mb-2">🎓 Capaian Pembelajaran</h3>
-                <ul className="list-disc list-inside space-y-1 text-green-700">
+              <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
+                <h3 className="text-xl font-bold text-green-700 mb-3">🎓 Capaian Pembelajaran</h3>
+                <ul className="list-disc list-inside space-y-2 text-lg text-green-700">
                   <li>Mendapat pengalaman kerja nyata di proyek perusahaan</li>
                   <li>Mendapat bimbingan dari mentor berpengalaman</li>
                   <li>Sertifikat magang setelah menyelesaikan program</li>
@@ -422,7 +424,7 @@ export default function Home() {
                 </ul>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-border">
                 <button
                   disabled={periodStatus !== 'open'}
                   onClick={() => {
@@ -430,8 +432,8 @@ export default function Home() {
                     navigate('/register', { state: { programCode: selectedProgram.program_code } });
                   }}
                   className={`flex-1 py-3 rounded-xl font-bold transition-all ${periodStatus === 'open'
-                      ? "bg-red-900 text-white hover:bg-red-950"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "bg-red-900 text-white hover:bg-red-950 shadow-xl shadow-red-900/20"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}
                 >
                   {periodStatus === 'open' ? 'Daftar Sekarang' : 'Pendaftaran Ditutup'}
@@ -527,7 +529,7 @@ export default function Home() {
                   <MapPin className="w-5 h-5 text-primary" />
                   Lokasi Penempatan
                 </h3>
-                <p className="text-muted-foreground">📍 Tangerang Site & Semarang Site</p>
+                <p className="text-muted-foreground">📍 Tangerang & Semarang </p>
               </div>
 
               <div className="mt-6 pt-2">
@@ -535,7 +537,11 @@ export default function Home() {
                   <Calendar className="w-5 h-5 text-primary" />
                   Periode Rekrutmen
                 </h3>
-                <p className="text-muted-foreground">🗓️ 10 – 30 November 2025</p>
+                <p className="text-muted-foreground">
+                  🗓️ {currentPeriod?.registration_start && currentPeriod?.registration_end
+                    ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} – ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                    : 'Menunggu Periode Baru'}
+                </p>
               </div>
 
               <div className="mt-8 p-5 bg-primary/5 rounded-2xl">

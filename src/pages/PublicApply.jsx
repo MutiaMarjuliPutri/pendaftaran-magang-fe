@@ -8,7 +8,7 @@ export default function PublicApply() {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedProgramCode = location.state?.programCode || '';
-  
+
   const [programs, setPrograms] = useState([]);
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,7 @@ export default function PublicApply() {
     email: '',
     username: '',
     phone: '',
+    address: '',
     password: '',
     applicant_type: 'mahasiswa', // 'mahasiswa' atau 'siswa'
     university: '',
@@ -128,9 +129,9 @@ export default function PublicApply() {
   return (
     <div className="min-h-screen bg-accent/20 py-12 px-4 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-red-900/5 blur-[120px] rounded-full -mr-32 -mt-32"></div>
-      
+
       <div className="max-w-4xl mx-auto relative z-10">
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-red-900 transition-colors mb-8 group"
         >
@@ -180,11 +181,15 @@ export default function PublicApply() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold ml-1">Nomor WhatsApp</label>
+                  <label className="text-sm font-semibold ml-1">Nomor WhatsApp / Telepon Aktif</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input pl-11 pr-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="0812xxxx" />
                   </div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-semibold ml-1">Alamat Tinggal / Domisili</label>
+                  <textarea name="address" value={formData.address} onChange={handleChange} required rows="3" className="w-full rounded-xl border border-input p-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all resize-none" placeholder="Masukkan alamat lengkap saat ini..." />
                 </div>
               </div>
             </section>
@@ -201,11 +206,10 @@ export default function PublicApply() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, applicant_type: 'mahasiswa', semester: '' }))}
-                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${
-                    formData.applicant_type === 'mahasiswa'
-                      ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
-                      : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${formData.applicant_type === 'mahasiswa'
+                    ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
+                    : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
+                    }`}
                 >
                   <GraduationCap size={20} />
                   Mahasiswa / Mahasiswi
@@ -214,11 +218,10 @@ export default function PublicApply() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, applicant_type: 'siswa', semester: '' }))}
-                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${
-                    formData.applicant_type === 'siswa'
-                      ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
-                      : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-3 h-16 rounded-2xl border-2 font-bold text-sm transition-all ${formData.applicant_type === 'siswa'
+                    ? 'border-red-900 bg-red-900/10 text-red-900 shadow-md shadow-red-900/10'
+                    : 'border-border text-muted-foreground hover:border-red-900/30 hover:bg-accent/50'
+                    }`}
                 >
                   <Briefcase size={20} />
                   Siswa / Siswi (SMA/SMK)
@@ -301,9 +304,9 @@ export default function PublicApply() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold ml-1">Posisi Diminati</label>
+                  <label className="text-sm font-semibold ml-1">Bersedia ditempatkan kantor</label>
                   <select name="position_id" value={formData.position_id} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
-                    <option value="">Pilih Posisi</option>
+                    <option value="">Pilih Kantor</option>
                     {positions.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
@@ -384,13 +387,12 @@ export default function PublicApply() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className={`w-full h-12 rounded-xl border pl-11 pr-4 outline-none transition-all shadow-sm focus:ring-2 ${
-                        confirmPassword.length === 0
-                          ? 'border-input focus:ring-red-900/20'
-                          : confirmPassword === formData.password
+                      className={`w-full h-12 rounded-xl border pl-11 pr-4 outline-none transition-all shadow-sm focus:ring-2 ${confirmPassword.length === 0
+                        ? 'border-input focus:ring-red-900/20'
+                        : confirmPassword === formData.password
                           ? 'border-emerald-500 focus:ring-emerald-500/20 bg-emerald-50/30'
                           : 'border-red-400 focus:ring-red-400/20 bg-red-50/30'
-                      }`}
+                        }`}
                       placeholder="Ulangi kata sandi"
                     />
                     {/* Match indicator */}
@@ -415,9 +417,9 @@ export default function PublicApply() {
             </section>
 
             <div className="pt-8 border-t border-border flex flex-col items-center gap-6">
-              <button 
-                type="submit" 
-                disabled={uploading} 
+              <button
+                type="submit"
+                disabled={uploading}
                 className="w-full md:w-auto px-16 h-16 bg-red-900 text-white rounded-[20px] font-extrabold shadow-2xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-xl"
               >
                 {uploading ? <Loader2 className="animate-spin" /> : <Send size={24} />}

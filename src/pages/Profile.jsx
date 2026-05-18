@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import api from "@/api/axios";
 import { toast } from "react-hot-toast";
-import { UserCircle, Mail, Phone, GraduationCap, Lock, Save, Camera, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
+import { UserCircle, Mail, Phone, GraduationCap, Lock, Save, Camera, CheckCircle2, ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FILE_URL } from "@/api/axios";
 
@@ -13,6 +13,7 @@ const profileSchema = z.object({
   full_name: z.string().min(1, "Nama lengkap wajib diisi"),
   email: z.string().email("Email tidak valid"),
   phone: z.string().min(1, "Nomor telepon wajib diisi"),
+  address: z.string().optional(),
   university: z.string().optional(),
   major: z.string().optional(),
   semester: z.string().optional().or(z.number().optional()),
@@ -32,6 +33,9 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef(null);
   const isStudent = user?.role?.toLowerCase() === "student" || user?.role?.toLowerCase() === "intern";
 
@@ -47,9 +51,10 @@ export default function Profile() {
       full_name: user?.full_name || "",
       email: user?.email || "",
       phone: user?.phone || "",
-      university: user?.registration?.university || user?.university || "",
-      major: user?.registration?.major || user?.major || "",
-      semester: user?.registration?.semester || user?.semester || "",
+      address: user?.address || "",
+      university: user?.university || "",
+      major: user?.major || "",
+      semester: user?.semester || "",
     },
   });
 
@@ -68,9 +73,10 @@ export default function Profile() {
         full_name: user.full_name,
         email: user.email,
         phone: user.phone,
-        university: user.registration?.university || user.university || "",
-        major: user.registration?.major || user.major || "",
-        semester: user.registration?.semester || user.semester || "",
+        address: user.address || "",
+        university: user.university || "",
+        major: user.major || "",
+        semester: user.semester || "",
       });
     }
   }, [user, resetProfile]);
@@ -284,6 +290,16 @@ export default function Profile() {
                       className="w-full bg-muted/30 border-transparent h-11 px-4 rounded-xl text-sm cursor-not-allowed opacity-70"
                     />
                   </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-semibold flex items-center gap-2">
+                      Alamat Domisili
+                    </label>
+                    <textarea
+                      {...registerProfile("address")}
+                      className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 p-4 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none resize-none min-h-[80px]"
+                      placeholder="Masukkan alamat lengkap"
+                    />
+                  </div>
                 </div>
 
                 {isStudent && (
@@ -344,32 +360,59 @@ export default function Profile() {
               <form onSubmit={handleSubmitPassword(onChangePassword)} className="max-w-md space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Kata Sandi Saat Ini</label>
-                  <input
-                    type="password"
-                    {...registerPassword("current_password")}
-                    className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
-                    placeholder="••••••••"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      {...registerPassword("current_password")}
+                      className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 pr-10 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {passwordErrors.current_password && <p className="text-xs text-destructive font-medium">{passwordErrors.current_password.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Kata Sandi Baru</label>
-                  <input
-                    type="password"
-                    {...registerPassword("new_password")}
-                    className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
-                    placeholder="Minimal 6 karakter"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      {...registerPassword("new_password")}
+                      className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 pr-10 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
+                      placeholder="Minimal 6 karakter"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {passwordErrors.new_password && <p className="text-xs text-destructive font-medium">{passwordErrors.new_password.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Konfirmasi Kata Sandi Baru</label>
-                  <input
-                    type="password"
-                    {...registerPassword("confirm_password")}
-                    className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
-                    placeholder="Ulangi kata sandi baru"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      {...registerPassword("confirm_password")}
+                      className="w-full bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 h-11 px-4 pr-10 rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/5 outline-none"
+                      placeholder="Ulangi kata sandi baru"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {passwordErrors.confirm_password && <p className="text-xs text-destructive font-medium">{passwordErrors.confirm_password.message}</p>}
                 </div>
 

@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X } from "lucide-react";
+import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,9 +25,11 @@ export default function Registrations() {
   const { data: statuses } = useQuery({ queryKey: ["statuses-all"], queryFn: async () => (await api.get("/master/registration-statuses/all")).data.data });
   const { data: placements } = useQuery({ queryKey: ["placements-all"], queryFn: async () => (await api.get("/master/placements/all")).data.data });
 
+  const [activeStatus, setActiveStatus] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [cvFileName, setCvFileName] = useState("");
   const [cvFileUrl, setCvFileUrl] = useState("");
@@ -135,6 +137,11 @@ export default function Registrations() {
     updateMutation.mutate({ id, updatedData: { status_id: statusId } });
   };
 
+  const handleStatusFilter = (statusId) => {
+    setActiveStatus(statusId);
+    setParams((prev) => ({ ...prev, status_id: statusId, page: 1 }));
+  };
+
   const columns = [
     {
       header: "Nomor & Peserta",
@@ -215,6 +222,9 @@ export default function Registrations() {
               </option>
             ))}
           </select>
+          <button onClick={() => setSelectedDetailItem(row)} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors" title="Lihat Detail">
+            <Eye size={16} />
+          </button>
           <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
             <Edit2 size={16} />
           </button>
@@ -243,7 +253,33 @@ export default function Registrations() {
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
-      />
+      >
+        <div className="flex flex-wrap gap-1.5 py-1.5">
+          <button
+            onClick={() => handleStatusFilter("")}
+            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+              activeStatus === ""
+                ? "bg-[#3D2925] text-white border-[#3D2925] shadow-sm shadow-[#3D2925]/25"
+                : "bg-background text-muted-foreground hover:text-foreground border-border hover:bg-muted/50"
+            }`}
+          >
+            Semua
+          </button>
+          {statuses?.map((status) => (
+            <button
+              key={status.id}
+              onClick={() => handleStatusFilter(status.id)}
+              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+                activeStatus === status.id
+                  ? "bg-[#3D2925] text-white border-[#3D2925] shadow-sm shadow-[#3D2925]/25"
+                  : "bg-background text-muted-foreground hover:text-foreground border-border hover:bg-muted/50"
+              }`}
+            >
+              {status.name.replace("_", " ")}
+            </button>
+          ))}
+        </div>
+      </DataTable>
 
       <FormModal
         isOpen={isModalOpen}
@@ -336,6 +372,119 @@ export default function Registrations() {
       </FormModal>
 
       <DeleteConfirm isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => deleteMutation.mutate(selectedItem.id, { onSuccess: () => setIsDeleteOpen(false) })} isLoading={deleteMutation.isLoading} />
+
+      {selectedDetailItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setSelectedDetailItem(null)}></div>
+          <div className="relative w-full max-w-4xl bg-card border border-border shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/20">
+              <h3 className="text-xl font-bold tracking-tight">Detail Pendaftar</h3>
+              <button onClick={() => setSelectedDetailItem(null)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0">
+                  <User size={32} />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold">{selectedDetailItem.intern?.name || "N/A"}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedDetailItem.intern?.email || "N/A"}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-2 py-1 bg-muted rounded text-xs font-semibold">{selectedDetailItem.registration_number}</span>
+                    <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-semibold uppercase">{selectedDetailItem.status?.name?.replace("_", " ")}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Informasi Akademik</p>
+                    <div className="bg-muted/30 p-3 rounded-xl space-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Instansi:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.university || "-"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Jurusan:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.major || "-"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Semester/Kelas:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.semester || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Kontak & Domisili</p>
+                    <div className="bg-muted/30 p-3 rounded-xl space-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">No. Telepon / WhatsApp:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.phone || "-"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Alamat Domisili:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.address || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Program Magang</p>
+                    <div className="bg-muted/30 p-3 rounded-xl space-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Program:</span>
+                        <p className="font-medium">{selectedDetailItem.program?.program_name || "-"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Posisi:</span>
+                        <p className="font-medium">{selectedDetailItem.position?.name || "Belum Ditentukan"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Durasi:</span>
+                        <p className="font-medium">{selectedDetailItem.duration} Bulan</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Batch:</span>
+                        <p className="font-medium">{selectedDetailItem.intern?.batch || "-"}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Tanggal Daftar:</span>
+                        <p className="font-medium">{selectedDetailItem.registration_date ? new Date(selectedDetailItem.registration_date).toLocaleDateString("id-ID") : "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {selectedDetailItem.cv_file && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Dokumen</p>
+                      <a href={`${FILE_URL}${selectedDetailItem.cv_file}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-xl text-sm font-bold transition-all w-full justify-center">
+                        <FileText size={16} /> Lihat CV (PDF)
+                      </a>
+                    </div>
+                  )}
+                  {selectedDetailItem.notes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Catatan</p>
+                      <div className="bg-amber-500/10 text-amber-700 p-3 rounded-xl text-sm">
+                        {selectedDetailItem.notes}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
+              <button onClick={() => setSelectedDetailItem(null)} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90 transition-all">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

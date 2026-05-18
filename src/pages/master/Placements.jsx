@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useCrud } from "@/hooks/useCrud";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import api from "@/api/axios";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
@@ -14,7 +17,19 @@ const schema = z.object({
 });
 
 export default function Placements() {
+  const queryClient = useQueryClient();
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/placements", "placements");
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => api.patch(`/master/placements/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["placements"]);
+      toast.success("Status berhasil diperbarui");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Gagal memperbarui status");
+    },
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -49,6 +64,11 @@ export default function Placements() {
     }
   };
 
+  const handleStatusToggle = (row) => {
+    const newStatus = row.status === "active" ? "inactive" : "active";
+    statusMutation.mutate({ id: row.id, status: newStatus });
+  };
+
   const columns = [
     {
       header: "Nama Lokasi",
@@ -64,9 +84,16 @@ export default function Placements() {
     {
       header: "Status",
       cell: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${row.status === "active" ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
-          {row.status === "active" ? "Aktif" : "Tidak Aktif"}
-        </span>
+        <button
+          onClick={() => handleStatusToggle(row)}
+          className="flex items-center gap-2 outline-none group"
+          disabled={updateMutation.isLoading}
+        >
+          <div className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${row.status === "active" ? "bg-[#3D2925]" : "bg-gray-200 border border-gray-300"}`}>
+            <div className={`absolute top-[2px] left-[2px] w-4 h-4 rounded-full bg-white transition-transform duration-200 ${row.status === "active" ? "translate-x-5 shadow-sm" : "translate-x-0 shadow-sm"}`} />
+          </div>
+          <span className="text-sm font-medium">{row.status === "active" ? "Aktif" : "Tidak Aktif"}</span>
+        </button>
       ),
     },
     {

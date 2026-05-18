@@ -43,6 +43,18 @@ export default function Interns() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => api.patch(`/master/interns/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["interns"]);
+      toast.success("Status peserta berhasil diperbarui");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Gagal memperbarui status");
+    },
+  });
+
+  const [activeStatus, setActiveStatus] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -87,6 +99,11 @@ export default function Interns() {
     } else {
       createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
     }
+  };
+
+  const handleStatusFilter = (status) => {
+    setActiveStatus(status);
+    setParams((prev) => ({ ...prev, status, page: 1 }));
   };
 
   const watchedInstitution = watch("university");
@@ -148,13 +165,30 @@ export default function Interns() {
     {
       header: "Status",
       cell: (row) => {
-        const statusColors = {
-          active: "bg-emerald-500/10 text-emerald-500",
-          inactive: "bg-gray-500/10 text-gray-500",
-          graduated: "bg-blue-500/10 text-blue-500",
-          dropped: "bg-destructive/10 text-destructive",
-        };
-        return <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase text-center ${statusColors[row.status]}`}>{row.status}</span>;
+        const isActive = row.status === "active";
+        return (
+          <button
+            onClick={() => {
+              if (row.status !== "active" && row.status !== "inactive") return;
+              const newStatus = isActive ? "inactive" : "active";
+              statusMutation.mutate({ id: row.id, status: newStatus });
+            }}
+            disabled={statusMutation.isLoading || (row.status !== "active" && row.status !== "inactive")}
+            className="flex items-center gap-2 outline-none group disabled:opacity-60"
+            title={isActive ? "Klik untuk nonaktifkan" : "Klik untuk aktifkan"}
+          >
+            <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ${
+              isActive ? "bg-[#3D2925]" : "bg-gray-200 border border-gray-300"
+            }`}>
+              <div className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-transform duration-300 ${
+                isActive ? "translate-x-5" : "translate-x-0"
+              }`} />
+            </div>
+            <span className="text-sm font-medium">
+              {isActive ? "Aktif" : row.status === "inactive" ? "Tidak Aktif" : row.status === "graduated" ? "Lulus" : "Dikeluarkan"}
+            </span>
+          </button>
+        );
       },
     },
     {
@@ -203,10 +237,10 @@ export default function Interns() {
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
         groupByKey="batch"
       >
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 mt-2">
           <select 
             onChange={(e) => setParams(prev => ({ ...prev, batch: e.target.value, page: 1 }))}
-            className="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
+            className="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20 h-10 bg-card"
           >
             <option value="">Semua Batch</option>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(b => (
