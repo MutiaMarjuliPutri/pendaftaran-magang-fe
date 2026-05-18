@@ -18,7 +18,7 @@ const schema = z.object({
 });
 
 export default function AssessmentCriteria() {
-  const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/assessment-criteria", "assessment-criteria");
+  const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/assessment-criteria", "assessment-criteria", { per_page: 50 });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -189,6 +189,36 @@ export default function AssessmentCriteria() {
       </FormModal>
 
       <DeleteConfirm isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => deleteMutation.mutate(selectedItem.id, { onSuccess: () => setIsDeleteOpen(false) })} isLoading={deleteMutation.isLoading} />
+
+      <div className="mt-8 p-6 bg-card border border-border rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+            <Star size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg">Informasi Range Nilai</h3>
+            <p className="text-sm text-muted-foreground text-xs italic">Kriteria kelulusan dan predikat nilai rata-rata.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+            <p className="text-xs font-bold text-emerald-600 mb-1">SANGAT BAIK</p>
+            <p className="text-2xl font-black text-emerald-700"> {">"} 80</p>
+          </div>
+          <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+            <p className="text-xs font-bold text-blue-600 mb-1">BAIK</p>
+            <p className="text-2xl font-black text-blue-700">71 - 80</p>
+          </div>
+          <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+            <p className="text-xs font-bold text-amber-600 mb-1">CUKUP</p>
+            <p className="text-2xl font-black text-amber-700">61 - 70</p>
+          </div>
+          <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10">
+            <p className="text-xs font-bold text-destructive mb-1">KURANG</p>
+            <p className="text-2xl font-black text-destructive">{"<"} 61</p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

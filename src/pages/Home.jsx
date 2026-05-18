@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [periodStatus, setPeriodStatus] = useState(null);
+  const [currentPeriod, setCurrentPeriod] = useState(null);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   const [acceptedInterns, setAcceptedInterns] = useState([]);
@@ -31,6 +32,7 @@ export default function Home() {
         const response = await api.get('/public/current-period');
         const period = response.data?.data;
         setPeriodStatus(period?.registration_status || 'open');
+        setCurrentPeriod(period);
       } catch (error) {
         console.error('Gagal mengambil status periode', error);
         setPeriodStatus('open');
@@ -125,12 +127,12 @@ export default function Home() {
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
             <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Rapier Intern
+              Portal Magang
             </span>
           </div>
           <div className="flex items-center gap-6">
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => window.open('/login', '_blank')}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Login
@@ -161,11 +163,21 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Pendaftaran Magang Periode 2026 Dibuka
+              Pendaftaran Magang {currentPeriod?.period_name || 'Periode'} Dibuka
+              {currentPeriod?.registration_start && currentPeriod?.registration_end && (
+                <span className="ml-1 opacity-80 font-normal">
+                  ({new Date(currentPeriod.registration_start).toLocaleDateString('id-ID')} - {new Date(currentPeriod.registration_end).toLocaleDateString('id-ID')})
+                </span>
+              )}
             </div>
           ) : periodStatus === 'closed' ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-sm font-semibold mb-8">
-              🔴 Pendaftaran Magang Periode 2026 Ditutup
+              🔴 Pendaftaran Magang {currentPeriod?.period_name || 'Periode'} Ditutup
+              {currentPeriod?.registration_start && currentPeriod?.registration_end && (
+                <span className="ml-1 opacity-80 font-normal text-xs">
+                  (Berakhir pada {new Date(currentPeriod.registration_end).toLocaleDateString('id-ID')})
+                </span>
+              )}
             </div>
           ) : periodStatus === 'announced' ? (
             <button
@@ -253,10 +265,14 @@ export default function Home() {
                     Lihat Detail
                   </button>
                   <button
+                    disabled={periodStatus !== 'open'}
                     onClick={() => navigate('/register', { state: { programCode: program.program_code } })}
-                    className="w-1/2 py-3 rounded-xl bg-red-900 text-white font-bold hover:bg-red-950 transition-all flex items-center justify-center gap-2"
+                    className={`w-1/2 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${periodStatus === 'open'
+                        ? "bg-red-900 text-white hover:bg-red-950"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
                   >
-                    Daftar <ArrowRight className="w-4 h-4" />
+                    {periodStatus === 'open' ? 'Daftar' : 'Ditutup'} {periodStatus === 'open' && <ArrowRight className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -408,15 +424,19 @@ export default function Home() {
 
               <div className="flex gap-3 pt-4">
                 <button
+                  disabled={periodStatus !== 'open'}
                   onClick={() => {
                     closeModal();
                     navigate('/register', { state: { programCode: selectedProgram.program_code } });
                   }}
-                  className="flex-1 py-3 rounded-xl bg-red-900 text-white font-bold hover:bg-red-950 transition-all"
+                  className={`flex-1 py-3 rounded-xl font-bold transition-all ${periodStatus === 'open'
+                      ? "bg-red-900 text-white hover:bg-red-950"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                 >
-                  Daftar Sekarang
+                  {periodStatus === 'open' ? 'Daftar Sekarang' : 'Pendaftaran Ditutup'}
                 </button>
-                <button onClick={closeModal} className="px-6 py-3 rounded-xl border border-border font-medium hover:bg-accent transition-all">
+                <button onClick={closeModal} className="flex-1 px-6 py-3 rounded-xl border border-border font-medium hover:bg-accent transition-all">
                   Tutup
                 </button>
               </div>
@@ -630,14 +650,13 @@ export default function Home() {
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <img src="/logo rapier.jpg" alt="Rapier Technology Logo" className="h-9 w-auto object-contain" />
-            <span className="font-bold">Rapier Intern</span>
+            <span className="font-bold">Portal Magang</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2026 Rapier Technology. Distributor PNP
+            © 2026 Rapier Technology. Konstributor PNP
           </p>
           <div className="flex items-center gap-4">
-            <a href="https://rapiertechnology.co.id" className="text-sm text-muted-foreground hover:text-primary transition-colors">Website</a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Kontak</a>
+            <a href="https://rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">Website</a>
           </div>
         </div>
       </footer>

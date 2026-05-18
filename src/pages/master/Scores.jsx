@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, Award, User } from "lucide-react";
+import { Edit2, Trash2, Award, User, ClipboardList, Plus, Star } from "lucide-react";
+import BulkAssessmentModal from "@/components/scores/BulkAssessmentModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,12 +20,15 @@ const schema = z.object({
 });
 
 export default function Scores() {
-  const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/scores", "scores");
+  const navigate = useNavigate();
+  const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation, refetch } = useCrud("/master/scores", "scores", { per_page: 50 });
 
   const { data: registrations } = useQuery({ queryKey: ["registrations-all"], queryFn: async () => (await api.get("/master/registrations/all")).data.data });
   const { data: criteria } = useQuery({ queryKey: ["criteria-all"], queryFn: async () => (await api.get("/master/assessment-criteria/all")).data.data });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [selectedRegId, setSelectedRegId] = useState("");
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -37,20 +42,13 @@ export default function Scores() {
   });
 
   const onAdd = () => {
-    setSelectedItem(null);
-    reset({ registration_id: "", criteria_id: "", score: 0, notes: "" });
-    setIsModalOpen(true);
+    setSelectedRegId("");
+    setIsBulkModalOpen(true);
   };
 
   const onEdit = (item) => {
-    setSelectedItem(item);
-    reset({
-      registration_id: item.registration_id,
-      criteria_id: item.criteria_id || item.criterion_id,
-      score: item.score,
-      notes: item.notes || "",
-    });
-    setIsModalOpen(true);
+    setSelectedRegId(item.registration_id);
+    setIsBulkModalOpen(true);
   };
 
   const onSubmit = (formData) => {
@@ -74,15 +72,12 @@ export default function Scores() {
       ),
     },
     {
-      header: "Kriteria",
-      cell: (row) => <span className="px-2 py-1 bg-muted rounded-lg text-xs font-medium">{row.criterion?.criteria_name || "-"}</span>,
-    },
-    {
-      header: "Nilai",
+      header: "Nilai Akhir",
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <Award size={14} className={row.score >= 75 ? "text-emerald-500" : "text-amber-500"} />
-          <span className="font-bold text-lg">{row.score}</span>
+          <Award size={14} className={parseFloat(row.score) >= 75 ? "text-emerald-500" : "text-amber-500"} />
+          <span className="font-bold text-lg">{parseFloat(row.score).toFixed(2)}</span>
+          <span className="text-[10px] text-muted-foreground ml-1">({row.criteria_count} kriteria)</span>
         </div>
       ),
     },
@@ -121,47 +116,39 @@ export default function Scores() {
         onSearch={(q) => setParams((prev) => ({ ...prev, q, page: 1 }))}
         pagination={pagination}
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
-      />
-
-      <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedItem ? "Edit Nilai" : "Tambah Nilai"} onSubmit={handleSubmit(onSubmit)} isLoading={createMutation.isLoading || updateMutation.isLoading}>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Peserta Magang</label>
-            <select {...register("registration_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value="">Pilih Peserta</option>
-              {registrations?.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.intern?.name}
-                </option>
-              ))}
-            </select>
-            {errors.registration_id && <p className="text-xs text-destructive">{errors.registration_id.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Kriteria Penilaian</label>
-            <select {...register("criteria_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value="">Pilih Kriteria</option>
-              {criteria?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.criteria_name}
-                </option>
-              ))}
-            </select>
-            {errors.criteria_id && <p className="text-xs text-destructive">{errors.criteria_id.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Nilai (0 - 100)</label>
-            <input type="number" {...register("score")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
-            {errors.score && <p className="text-xs text-destructive">{errors.score.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Catatan (Opsional)</label>
-            <textarea {...register("notes")} className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all" />
-          </div>
+      >
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate("/master/assessment-criteria")}
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 font-semibold shadow-sm hover:bg-amber-500/20 transition-all active:scale-95"
+          >
+            <Star size={18} />
+            Kelola Parameter
+          </button>
+          <button
+            onClick={() => setIsBulkModalOpen(true)}
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-sm hover:opacity-90 transition-all active:scale-95"
+          >
+            <ClipboardList size={18} />
+            Form Penilaian
+          </button>
         </div>
-      </FormModal>
+      </DataTable>
+
+      {/* Single score modal removed in favor of bulk modal */}
 
       <DeleteConfirm isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => deleteMutation.mutate(selectedItem.id, { onSuccess: () => setIsDeleteOpen(false) })} isLoading={deleteMutation.isLoading} />
+
+      <BulkAssessmentModal 
+        isOpen={isBulkModalOpen} 
+        onClose={() => setIsBulkModalOpen(false)} 
+        registrations={registrations} 
+        criteria={criteria}
+        initialRegistrationId={selectedRegId}
+        onSuccess={() => {
+          refetch(); // Trigger immediate refresh
+        }}
+      />
     </>
   );
 }

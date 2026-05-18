@@ -9,22 +9,22 @@ import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 
 const menuItems = [
-    { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
-    { icon: UserCircle, label: "Profil Saya", path: "/profile" },
-    { icon: Briefcase, label: "Lamar Magang", path: "/apply", roles: ["student"] },
-    { icon: Building2, label: "Divisi", path: "/master/divisions", roles: ["admin"] },
-    { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods", roles: ["admin"] },
-    { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs", roles: ["admin"] },
-    { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses", roles: ["admin"] },
-    { icon: MapPin, label: "Penempatan", path: "/master/placements", roles: ["admin"] },
-    { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations", roles: ["admin"] },
-    { icon: Users, label: "Peserta Magang", path: "/master/interns", roles: ["admin", "mentor"] },
-    { icon: CheckCircle2, label: "Penugasan Mentor", path: "/master/mentor-interns", roles: ["admin"] },
-    { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", roles: ["admin", "mentor"] },
-    { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
-    { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
-    { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["mentor", "student", "intern"] },
-  ];
+  { icon: LayoutDashboard, label: "Beranda", path: "/dashboard" },
+  { icon: UserCircle, label: "Profil Saya", path: "/profile" },
+  { icon: Briefcase, label: "Lamar Magang", path: "/apply", roles: ["student"] },
+  { icon: Building2, label: "Divisi", path: "/master/divisions", roles: ["admin"] },
+  { icon: Calendar, label: "Periode Magang", path: "/master/internship-periods", roles: ["admin"] },
+  { icon: Briefcase, label: "Program Magang", path: "/master/internship-programs", roles: ["admin"] },
+  { icon: ClipboardCheck, label: "Status Pendaftaran", path: "/master/registration-statuses", roles: ["admin"] },
+  { icon: MapPin, label: "Penempatan", path: "/master/placements", roles: ["admin"] },
+  { icon: ClipboardList, label: "Pendaftaran", path: "/master/registrations", roles: ["admin"] },
+  { icon: Users, label: "Peserta Magang", path: "/master/interns", roles: ["admin", "mentor"] },
+  { icon: CheckCircle2, label: "Penugasan Mentor", path: "/master/mentor-interns", roles: ["admin"] },
+  { icon: Star, label: "Kriteria Penilaian", path: "/master/assessment-criteria", roles: ["admin", "mentor"] },
+  { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
+  { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
+  { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["mentor", "student", "intern"] },
+];
 
 export default function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -81,12 +81,12 @@ export default function DashboardLayout() {
   const filteredMenuItems = menuItems.filter(item => {
     const rawRole = typeof user?.role === 'object' ? user.role?.name : user?.role;
     const userRole = rawRole?.toLowerCase();
-    
+
     // Jika menu memiliki batasan role
     if (item.roles && !item.roles.some(r => r.toLowerCase() === userRole)) {
       return false;
     }
-    
+
     // Jika menu "Lamar Magang", sembunyikan kalau sudah diterima (jadi intern)
     if (item.path === "/apply") {
       if (userRole === 'intern' || user?.registration?.status?.toLowerCase() === 'accepted' || user?.registration?.intern_id) {
@@ -139,18 +139,18 @@ export default function DashboardLayout() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           {isSidebarOpen ? (
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo rapier.jpg" 
-                alt="Rapier Technology" 
+              <img
+                src="/logo rapier.jpg"
+                alt="Rapier Technology"
                 className="w-16 h-16 object-contain rounded-lg"
               />
-              <span className="font-bold text-lg tracking-tight">Magang Hub</span>
+              <span className="font-bold text-lg tracking-tight">Portal Magang</span>
             </div>
           ) : (
             <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center">
-              <img 
-                src="/logo-rapier.png" 
-                alt="Logo" 
+              <img
+                src="/logo-rapier.png"
+                alt="Logo"
                 className="w-12 h-12 object-contain"
               />
             </div>
@@ -205,7 +205,7 @@ export default function DashboardLayout() {
 
           <div className="flex items-center gap-4">
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                 className="p-2 rounded-xl hover:bg-muted relative transition-colors"
               >
@@ -222,7 +222,7 @@ export default function DashboardLayout() {
                   <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                     <h3 className="font-bold text-sm">Notifikasi</h3>
                     {unreadCount > 0 && (
-                      <button 
+                      <button
                         onClick={() => markAllReadMutation.mutate()}
                         className="text-[10px] text-primary hover:underline font-semibold"
                       >
@@ -238,8 +238,8 @@ export default function DashboardLayout() {
                       </div>
                     ) : (
                       notifications?.map((n) => (
-                        <div 
-                          key={n.id} 
+                        <div
+                          key={n.id}
                           onClick={() => {
                             if (!n.is_read) markReadMutation.mutate(n.id);
                             // Bisa tambah navigasi ke halaman terkait di sini
@@ -272,9 +272,9 @@ export default function DashboardLayout() {
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-sm overflow-hidden">
                 {user?.photo ? (
-                  <img 
-                    src={`${FILE_URL}${user.photo}`} 
-                    alt="Profile" 
+                  <img
+                    src={`${FILE_URL}${user.photo}`}
+                    alt="Profile"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.onerror = null;

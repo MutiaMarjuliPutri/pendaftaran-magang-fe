@@ -581,100 +581,114 @@ export default function LogBooks() {
 
       {/* Modal Detail */}
       {isDetailOpen && detailItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <h2 className="text-xl font-bold">Detail Log Book</h2>
               <button 
                 onClick={() => setIsDetailOpen(false)} 
-                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
               >
                 ✕
               </button>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Judul</label>
-                <p className="text-gray-800 font-medium">{detailItem.title}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Periode</label>
-                <p className="text-gray-800">
-                  {detailItem.start_date ? new Date(detailItem.start_date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
-                  {" - "}
-                  {detailItem.end_date ? new Date(detailItem.end_date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
-                </p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status Validasi</label>
-                <div className="mt-1">
-                  {detailItem.validation === "approved" || detailItem.validation === true || detailItem.validation === "1" ? (
-                    <span className="inline-flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs border border-green-200">
-                      <CheckCircle size={12} /> Disetujui
-                    </span>
-                  ) : detailItem.validation === "rejected" || detailItem.validation === false ? (
-                    <span className="inline-flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs border border-red-200">
-                      <XCircle size={12} /> Ditolak
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs border border-yellow-200">
-                      <XCircle size={12} /> Menunggu
-                    </span>
-                  )}
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Kolom Info Kiri */}
+                <div className="space-y-6 md:col-span-1">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 block">Judul Laporan</label>
+                    <p className="text-gray-900 font-medium">{detailItem.title}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 block">Periode</label>
+                    <p className="text-gray-900 text-sm font-medium">
+                      {detailItem.start_date ? new Date(detailItem.start_date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
+                      <br/>
+                      <span className="text-gray-400 font-normal">sampai</span>
+                      <br/>
+                      {detailItem.end_date ? new Date(detailItem.end_date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 block">Status Validasi</label>
+                    <div className="mt-1">
+                      {detailItem.validation === "approved" || detailItem.validation === true || detailItem.validation === "1" ? (
+                        <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200">
+                          <CheckCircle size={14} /> Disetujui
+                        </span>
+                      ) : detailItem.validation === "rejected" || detailItem.validation === false ? (
+                        <span className="inline-flex items-center gap-1.5 text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold border border-rose-200">
+                          <XCircle size={14} /> Ditolak
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg text-sm font-bold border border-amber-200">
+                          <XCircle size={14} /> Menunggu
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">File Dokumentasi</label>
+                    {detailItem.documentation_url ? (
+                      <a 
+                        href={`${BASE_URL}${detailItem.documentation_url}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-sm font-medium w-full justify-center"
+                      >
+                        <FileText size={16} /> Lihat PDF
+                      </a>
+                    ) : (
+                      <p className="text-gray-400 text-sm italic">Tidak ada file lampiran</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500 block mb-2">Aktivitas Harian</label>
-                <div className="space-y-3">
-                  {detailItem.activities && Array.isArray(detailItem.activities) && detailItem.activities.length > 0 ? (
-                    detailItem.activities.map((act, idx) => (
-                      <div key={idx} className="border rounded-lg p-3 bg-gray-50">
-                        <div className="font-medium text-sm text-purple-700">
-                          {act.day ? `${act.day}, ` : ''}
-                          {act.date ? act.date.split('-').reverse().join('/') : (act.date_display || "-")}
+
+                {/* Kolom Aktivitas Kanan */}
+                <div className="md:col-span-2 bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                  <label className="text-sm font-bold text-gray-800 block mb-4 flex items-center gap-2">
+                    Aktivitas Harian
+                  </label>
+                  <div className="space-y-4">
+                    {detailItem.activities && Array.isArray(detailItem.activities) && detailItem.activities.length > 0 ? (
+                      detailItem.activities.map((act, idx) => (
+                        <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                          <div className="font-bold text-sm text-primary mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
+                            <span>{act.day ? act.day : 'Hari'}</span>
+                            <span className="text-xs font-normal text-gray-400">
+                              {act.date ? act.date.split('-').reverse().join('/') : (act.date_display || "-")}
+                            </span>
+                          </div>
+                          <div className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
+                            {act.description || <span className="text-gray-400 italic">Tidak ada catatan untuk hari ini.</span>}
+                          </div>
                         </div>
-                        <div className="whitespace-pre-line text-sm mt-1">{act.description || "-"}</div>
+                      ))
+                    ) : (
+                      <div className="bg-white rounded-xl p-4 border border-gray-100">
+                         <p className="text-gray-600 text-sm whitespace-pre-line leading-relaxed">{detailItem.description || "Tidak ada deskripsi kegiatan."}</p>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">{detailItem.description || "-"}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">File Dokumentasi</label>
-                <div className="mt-1">
-                  {detailItem.documentation_url ? (
-                    <a 
-                      href={`${BASE_URL}${detailItem.documentation_url}`} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-blue-500 hover:text-blue-700 text-sm flex items-center gap-1"
-                    >
-                      <FileText size={14} /> Lihat PDF
-                    </a>
-                  ) : (
-                    <p className="text-gray-500 text-sm">-</p>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-end mt-6 pt-4 border-t gap-2">
+            <div className="flex justify-end p-6 border-t border-gray-100 gap-3 bg-gray-50/50">
               {isMentor && (
                 <select
                   value={detailItem.validation || "waiting"}
                   onChange={(e) => validateMutation.mutate({ id: detailItem.id, validation: e.target.value })}
                   className={cn(
-                    "px-4 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm",
-                    detailItem.validation === "approved" || detailItem.validation === true || detailItem.validation === "1" ? "bg-green-600 text-white border-green-700" :
-                    detailItem.validation === "rejected" ? "bg-red-600 text-white border-red-700" :
-                    "bg-yellow-500 text-white border-yellow-600"
+                    "px-4 py-2 rounded-xl border outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm shadow-sm",
+                    detailItem.validation === "approved" || detailItem.validation === true || detailItem.validation === "1" ? "bg-emerald-600 text-white border-emerald-700" :
+                    detailItem.validation === "rejected" ? "bg-rose-600 text-white border-rose-700" :
+                    "bg-amber-500 text-white border-amber-600"
                   )}
                   disabled={validateMutation.isLoading}
                 >
@@ -685,7 +699,7 @@ export default function LogBooks() {
               )}
               <button 
                 onClick={() => setIsDetailOpen(false)} 
-                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-6 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-700 shadow-sm"
               >
                 Tutup
               </button>
