@@ -115,7 +115,8 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen bg-background font-sans relative overflow-x-hidden">
+
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
@@ -151,6 +152,8 @@ export default function Home() {
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+
+
 
         <div className="container mx-auto px-6 relative z-10 text-center">
           {isLoadingStatus ? (
@@ -552,51 +555,59 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-3xl overflow-hidden">
-              <div className="p-6 pb-0">
+            <div className="bg-card border border-border rounded-3xl p-8 flex flex-col justify-between">
+              <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Lokasi Kantor</h3>
-                <p className="text-muted-foreground">Kunjungi kami di dua lokasi strategis kami</p>
+                <p className="text-muted-foreground text-sm">Kunjungi kami di dua lokasi strategis kami</p>
               </div>
 
-              <div className="p-6 border-b border-border">
-                <div className="flex items-start gap-3 mb-3">
-                  <Building2 className="w-5 h-5 text-primary mt-0.5" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Rapier Tangerang */}
+                <div className="flex flex-col justify-between h-full bg-accent/10 border border-border/40 p-4 rounded-2xl">
                   <div>
-                    <h4 className="font-bold">Rapier Tangerang</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129 Indonesia
-                    </p>
+                    <div className="flex items-start gap-2.5 mb-2">
+                      <Building2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground">Rapier Tangerang</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed min-h-[48px]">
+                          JL. Iskandar Muda No.8, Neglasari, Kec. Neglasari, Kota Tangerang, Banten 15129 Indonesia
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-full h-36 rounded-xl overflow-hidden bg-muted mt-2">
+                    <iframe
+                      title="Rapier Tangerang Map"
+                      className="w-full h-full border-0"
+                      src="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang,+Banten+15129&output=embed"
+                      allowFullScreen
+                      loading="lazy"
+                    />
                   </div>
                 </div>
-                <div className="w-full h-48 rounded-xl overflow-hidden bg-muted mt-2">
-                  <iframe
-                    title="Rapier Tangerang Map"
-                    className="w-full h-full"
-                    src="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang,+Banten+15129&output=embed"
-                    allowFullScreen
-                    loading="lazy"
-                  />
-                </div>
-              </div>
 
-              <div className="p-6">
-                <div className="flex items-start gap-3 mb-3">
-                  <Building2 className="w-5 h-5 text-primary mt-0.5" />
+                {/* Rapier Semarang */}
+                <div className="flex flex-col justify-between h-full bg-accent/10 border border-border/40 p-4 rounded-2xl">
                   <div>
-                    <h4 className="font-bold">Rapier Semarang</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278, Indonesia
-                    </p>
+                    <div className="flex items-start gap-2.5 mb-2">
+                      <Building2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground">Rapier Semarang</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed min-h-[48px]">
+                          JL. Mulawarman Selatan Raya No.16, Kramas, Kec. Tembalang, Kota Semarang, Jawa Tengah 50278, Indonesia
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="w-full h-48 rounded-xl overflow-hidden bg-muted mt-2">
-                  <iframe
-                    title="Rapier Semarang Map"
-                    className="w-full h-full"
-                    src="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang,+Jawa+Tengah+50278&output=embed"
-                    allowFullScreen
-                    loading="lazy"
-                  />
+                  <div className="w-full h-36 rounded-xl overflow-hidden bg-muted mt-2">
+                    <iframe
+                      title="Rapier Semarang Map"
+                      className="w-full h-full border-0"
+                      src="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang,+Jawa+Tengah+50278&output=embed"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

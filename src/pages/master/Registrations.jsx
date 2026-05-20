@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye } from "lucide-react";
+import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +16,7 @@ const schema = z.object({
   position_id: z.string().optional(),
   duration: z.coerce.number().min(1, "Durasi minimal 1 bulan"),
   notes: z.string().optional(),
+  interview_date: z.string().optional().nullable(),
 });
 
 export default function Registrations() {
@@ -30,6 +31,7 @@ export default function Registrations() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
+  const [quickInterviewModal, setQuickInterviewModal] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [cvFileName, setCvFileName] = useState("");
   const [cvFileUrl, setCvFileUrl] = useState("");
@@ -49,8 +51,13 @@ export default function Registrations() {
       position_id: "",
       duration: 3,
       notes: "",
+      interview_date: "",
     },
   });
+
+  const watchStatusId = watch("status_id");
+  const selectedStatus = statuses?.find(s => s.id === watchStatusId);
+  const isInterviewStatus = selectedStatus?.name === "interview1" || selectedStatus?.name === "interview2";
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -98,6 +105,7 @@ export default function Registrations() {
       position_id: "",
       duration: 3,
       notes: "",
+      interview_date: "",
     });
     setCvFileUrl("");
     setCvFileName("");
@@ -106,12 +114,19 @@ export default function Registrations() {
 
   const onEdit = (item) => {
     setSelectedItem(item);
+    let formattedInterviewDate = "";
+    if (item.interview_date) {
+      const date = new Date(item.interview_date);
+      const tzOffset = date.getTimezoneOffset() * 60000;
+      formattedInterviewDate = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    }
     reset({
       internship_program_id: item.internship_program_id,
       status_id: item.status_id,
       position_id: item.position_id || "",
       duration: item.duration,
       notes: item.notes || "",
+      interview_date: formattedInterviewDate,
     });
     setCvFileUrl("");
     setCvFileName("");
@@ -119,17 +134,21 @@ export default function Registrations() {
   };
 
   const onSubmit = (formData) => {
-    const submitData = selectedItem
-      ? formData
+    const submitData = {
+      ...formData,
+      interview_date: formData.interview_date || null
+    };
+    const finalData = selectedItem
+      ? submitData
       : {
-          ...formData,
+          ...submitData,
           cv_file: cvFileUrl,
         };
 
     if (selectedItem) {
-      updateMutation.mutate({ id: selectedItem.id, updatedData: submitData }, { onSuccess: () => setIsModalOpen(false) });
+      updateMutation.mutate({ id: selectedItem.id, updatedData: finalData }, { onSuccess: () => setIsModalOpen(false) });
     } else {
-      createMutation.mutate(submitData, { onSuccess: () => setIsModalOpen(false) });
+      createMutation.mutate(finalData, { onSuccess: () => setIsModalOpen(false) });
     }
   };
 
@@ -182,9 +201,22 @@ export default function Registrations() {
         };
         const colorClass = statusColors[row.status?.name] || "bg-primary/10 text-primary border-primary/20";
         return (
-          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border ${colorClass}`}>
-            {row.status?.name?.replace("_", " ") || "Pending"}
-          </span>
+          <div className="flex flex-col gap-1.5 items-start">
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border ${colorClass}`}>
+              {row.status?.name?.replace("_", " ") || "Pending"}
+            </span>
+            {row.interview_date && (
+              <span className="text-[9px] text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-blue-500/10" title="Jadwal Wawancara">
+                <Calendar size={10} />
+                {new Date(row.interview_date).toLocaleString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })} WIB
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -213,7 +245,15 @@ export default function Registrations() {
         <div className="flex justify-end items-center gap-2">
           <select
             value={row.status_id}
-            onChange={(e) => handleQuickStatusUpdate(row.id, e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              const sObj = statuses?.find(s => s.id === val);
+              if (sObj?.name === "interview1" || sObj?.name === "interview2") {
+                setQuickInterviewModal({ id: row.id, status_id: val, status_name: sObj.name });
+              } else {
+                handleQuickStatusUpdate(row.id, val);
+              }
+            }}
             className="h-8 bg-muted border-none text-[10px] font-bold uppercase rounded-lg px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all hover:bg-muted/80"
           >
             {statuses?.map((s) => (
@@ -281,6 +321,8 @@ export default function Registrations() {
         </div>
       </DataTable>
 
+
+
       <FormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -326,6 +368,17 @@ export default function Registrations() {
               </select>
               {errors.status_id && <p className="text-xs text-destructive">{errors.status_id.message}</p>}
             </div>
+            {isInterviewStatus && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-sm font-medium">Tanggal & Waktu Wawancara <span className="text-red-500">*</span></label>
+                <input
+                  type="datetime-local"
+                  {...register("interview_date")}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                />
+                {errors.interview_date && <p className="text-xs text-destructive">{errors.interview_date.message}</p>}
+              </div>
+            )}
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -372,6 +425,55 @@ export default function Registrations() {
       </FormModal>
 
       <DeleteConfirm isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => deleteMutation.mutate(selectedItem.id, { onSuccess: () => setIsDeleteOpen(false) })} isLoading={deleteMutation.isLoading} />
+
+      {quickInterviewModal && (
+        <FormModal
+          isOpen={!!quickInterviewModal}
+          onClose={() => setQuickInterviewModal(null)}
+          title={`Jadwalkan Wawancara (${quickInterviewModal.status_name.replace("_", " ")})`}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const dateVal = e.target.elements.quick_interview_date.value;
+            const notesVal = e.target.elements.quick_notes.value;
+            if (!dateVal) {
+              alert("Tanggal wawancara wajib diisi");
+              return;
+            }
+            updateMutation.mutate({
+              id: quickInterviewModal.id,
+              updatedData: {
+                status_id: quickInterviewModal.status_id,
+                interview_date: dateVal,
+                notes: notesVal || undefined,
+              }
+            }, {
+              onSuccess: () => setQuickInterviewModal(null)
+            });
+          }}
+          isLoading={updateMutation.isLoading}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tanggal & Waktu Wawancara <span className="text-red-500">*</span></label>
+              <input
+                type="datetime-local"
+                name="quick_interview_date"
+                required
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Catatan Tambahan (opsional)</label>
+              <textarea
+                name="quick_notes"
+                className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                placeholder="Misal: Link Meet / Zoom, atau instruksi pengerjaan tes..."
+              />
+            </div>
+          </div>
+        </FormModal>
+      )}
 
       {selectedDetailItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -464,6 +566,22 @@ export default function Registrations() {
                       <a href={`${FILE_URL}${selectedDetailItem.cv_file}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-xl text-sm font-bold transition-all w-full justify-center">
                         <FileText size={16} /> Lihat CV (PDF)
                       </a>
+                    </div>
+                  )}
+                  {selectedDetailItem.interview_date && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase mb-1">Jadwal Wawancara</p>
+                      <div className="bg-blue-500/10 text-blue-700 p-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+                        <Calendar size={16} />
+                        {new Date(selectedDetailItem.interview_date).toLocaleString("id-ID", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })} WIB
+                      </div>
                     </div>
                   )}
                   {selectedDetailItem.notes && (

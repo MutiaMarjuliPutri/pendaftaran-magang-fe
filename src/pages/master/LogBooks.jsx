@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Trash2, FileText, CheckCircle, XCircle, Edit2, Upload, Eye } from "lucide-react";
+import { Trash2, FileText, CheckCircle, XCircle, Edit2, Upload, Eye, MessageSquare, Clock, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -45,7 +45,7 @@ export default function LogBooks() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/log-books", "log-books");
 
   const validateMutation = useMutation({
-    mutationFn: ({ id, validation }) => api.patch(`/master/log-books/${id}/validate`, { validation }),
+    mutationFn: ({ id, validation, mentor_feedback }) => api.patch(`/master/log-books/${id}/validate`, { validation, mentor_feedback }),
     onSuccess: () => {
       queryClient.invalidateQueries(["log-books"]);
       toast.success("Berhasil memperbarui status validasi");
@@ -72,8 +72,12 @@ export default function LogBooks() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
+  const [feedbackItem, setFeedbackItem] = useState(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackValidation, setFeedbackValidation] = useState("waiting");
   const [uploading, setUploading] = useState(false);
   const [activities, setActivities] = useState([]);
 
@@ -199,7 +203,26 @@ export default function LogBooks() {
     if (row.activities) {
       try {
         const parsed = typeof row.activities === 'string' ? JSON.parse(row.activities) : row.activities;
-        setActivities(parsed);
+        const s = row.start_date?.split("T")[0];
+        const e = row.end_date?.split("T")[0];
+        
+        if (s && e) {
+          const range = generateDateRange(s, e);
+          const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+          const fullActivities = range.map((date, idx) => {
+            const dateStr = date.toISOString().split("T")[0];
+            const existing = parsed.find(a => a.date === dateStr);
+            return {
+              id: idx,
+              day: days[date.getDay()],
+              date: dateStr,
+              description: existing ? existing.description : "",
+            };
+          });
+          setActivities(fullActivities);
+        } else {
+          setActivities(parsed);
+        }
       } catch {
         setActivities([]);
       }
@@ -212,7 +235,26 @@ export default function LogBooks() {
     setIsDetailOpen(true);
   };
 
-  const onSubmit = async (formData) => {
+  const onFeedback = (row) => {
+    setFeedbackItem(row);
+    setFeedbackText(row.mentor_feedback || "");
+    setFeedbackValidation(row.validation || "waiting");
+    setIsFeedbackOpen(true);
+  };
+
+  const handleFeedbackSubmit = () => {
+    validateMutation.mutate(
+      { id: feedbackItem.id, validation: feedbackValidation, mentor_feedback: feedbackText },
+      {
+        onSuccess: () => {
+          setIsFeedbackOpen(false);
+          setFeedbackItem(null);
+        }
+      }
+    );
+  };
+
+  const handleCustomSubmit = async (formData, validationStatus) => {
     const submitData = {
       title: formData.title,
       start_date: formData.start_date,
@@ -220,6 +262,7 @@ export default function LogBooks() {
       activities: activities.filter(a => a.description.trim()),
       description: formData.description,
       documentation_url: formData.documentation_url,
+      validation: validationStatus,
     };
 
     if (selectedItem) {
@@ -232,7 +275,9 @@ export default function LogBooks() {
 
   // Helper function untuk mendapatkan status label
   const getValidationStatus = (validation) => {
-    if (validation === "approved" || validation === true || validation === "1") {
+    if (validation === "draft") {
+      return { label: "Draft", className: "bg-slate-100 text-slate-700 border-slate-200" };
+    } else if (validation === "approved" || validation === true || validation === "1") {
       return { label: "Disetujui", className: "bg-green-100 text-green-700 border-green-200" };
     } else if (validation === "rejected" || validation === false) {
       return { label: "Ditolak", className: "bg-red-100 text-red-700 border-red-200" };
@@ -310,7 +355,8 @@ export default function LogBooks() {
           )}>
             {status.label === "Disetujui" && <CheckCircle size={10} />}
             {status.label === "Ditolak" && <XCircle size={10} />}
-            {status.label === "Menunggu" && <XCircle size={10} />}
+            {status.label === "Menunggu" && <Clock size={10} />}
+            {status.label === "Draft" && <Edit2 size={10} />}
             {status.label}
           </span>
         );
@@ -337,7 +383,15 @@ export default function LogBooks() {
               <option value="rejected">Tolak</option>
             </select>
           ) : (
-            <span className="text-xs text-gray-500">-</span>
+            <div className="max-w-[200px]">
+              {row.mentor_feedback ? (
+                <p className="text-xs text-gray-600 italic line-clamp-2" title={row.mentor_feedback}>
+                  "{row.mentor_feedback}"
+                </p>
+              ) : (
+                <span className="text-xs text-gray-400">-</span>
+              )}
+            </div>
           )}
         </div>
       ),
@@ -373,7 +427,28 @@ export default function LogBooks() {
       header: "Aksi",
       className: "text-right",
       cell: (row) => {
-        const canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId) && isInternActive);
+        let canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId) && isInternActive);
+        if (isStudent && (row.validation === 'waiting' || row.validation === 'approved' || row.validation === true || row.validation === '1')) {
+          canManage = false;
+        }
+
+        if (isMentor) {
+          const hasFeedback = !!row.mentor_feedback;
+          return (
+            <button
+              onClick={() => onFeedback(row)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
+                hasFeedback 
+                  ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                  : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200"
+              )}
+              title={hasFeedback ? "Edit Feedback" : "Beri Feedback"}
+            >
+              <MessageSquare size={13} /> {hasFeedback ? "Edit Feedback" : "Beri Feedback"}
+            </button>
+          );
+        }
 
         if (!canManage) {
           return <span className="text-xs text-gray-400">-</span>;
@@ -483,9 +558,38 @@ export default function LogBooks() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={selectedItem ? "Edit Log Aktivitas" : "Tambah Log Aktivitas Mingguan"}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((data) => handleCustomSubmit(data, "waiting"))}
         isLoading={createMutation.isLoading || updateMutation.isLoading}
         maxWidth="max-w-3xl"
+        customFooter={
+          <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-border font-medium hover:bg-muted transition-all"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit((data) => handleCustomSubmit(data, "draft"))}
+              disabled={createMutation.isLoading || updateMutation.isLoading}
+              className="px-6 py-2 rounded-xl bg-slate-200 text-slate-800 font-bold shadow-sm hover:bg-slate-300 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {(createMutation.isLoading || updateMutation.isLoading) && <Loader2 size={16} className="animate-spin" />}
+              Simpan Draft
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit((data) => handleCustomSubmit(data, "waiting"))}
+              disabled={createMutation.isLoading || updateMutation.isLoading}
+              className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {(createMutation.isLoading || updateMutation.isLoading) && <Loader2 size={16} className="animate-spin" />}
+              Kirim ke Mentor
+            </button>
+          </div>
+        }
       >
         <div className="space-y-4">
           <div>
@@ -592,6 +696,101 @@ export default function LogBooks() {
         isLoading={deleteMutation.isLoading} 
       />
 
+      {/* Modal Feedback Mentor */}
+      {isFeedbackOpen && feedbackItem && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <MessageSquare size={18} className="text-indigo-500" /> Beri Feedback
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">Log Book: <span className="font-semibold text-gray-700">{feedbackItem.title}</span></p>
+                {feedbackItem.user && (
+                  <p className="text-xs text-purple-600 font-medium mt-0.5">Mahasiswa: {feedbackItem.user.full_name}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setIsFeedbackOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              {/* Status Validasi */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">Status Validasi</label>
+                <div className="flex gap-3">
+                  {[
+                    { value: "waiting", label: "Menunggu", color: "bg-amber-50 border-amber-300 text-amber-700", active: "ring-2 ring-amber-400" },
+                    { value: "approved", label: "✓ Setujui", color: "bg-emerald-50 border-emerald-300 text-emerald-700", active: "ring-2 ring-emerald-400" },
+                    { value: "rejected", label: "✕ Tolak", color: "bg-rose-50 border-rose-300 text-rose-700", active: "ring-2 ring-rose-400" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setFeedbackValidation(opt.value)}
+                      className={cn(
+                        "flex-1 py-2 rounded-xl border text-xs font-bold transition-all",
+                        opt.color,
+                        feedbackValidation === opt.value ? opt.active : "opacity-60 hover:opacity-100"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feedback Text */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Catatan / Feedback
+                  <span className="ml-1 text-xs font-normal text-gray-400">(opsional)</span>
+                </label>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  rows={4}
+                  placeholder="Tulis catatan atau masukan untuk peserta terkait log book ini..."
+                  className="w-full p-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none transition-all"
+                />
+                <p className="text-xs text-gray-400 mt-1">{feedbackText.length} karakter</p>
+              </div>
+
+              {/* Feedback sebelumnya */}
+              {feedbackItem.mentor_feedback && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                  <p className="text-xs font-bold text-indigo-600 mb-1">Catatan sebelumnya:</p>
+                  <p className="text-sm text-indigo-800 whitespace-pre-line">{feedbackItem.mentor_feedback}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 p-6 border-t border-gray-100">
+              <button
+                onClick={() => setIsFeedbackOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleFeedbackSubmit}
+                disabled={validateMutation.isLoading}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={15} />
+                {validateMutation.isLoading ? "Menyimpan..." : "Simpan Feedback"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Detail */}
       {isDetailOpen && detailItem && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -660,6 +859,13 @@ export default function LogBooks() {
                       <p className="text-gray-400 text-sm italic">Tidak ada file lampiran</p>
                     )}
                   </div>
+
+                  {detailItem.mentor_feedback && (
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                      <label className="text-xs font-bold uppercase tracking-wider text-indigo-500 mb-1 block">Catatan Mentor</label>
+                      <p className="text-sm text-indigo-900 whitespace-pre-line leading-relaxed">{detailItem.mentor_feedback}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Kolom Aktivitas Kanan */}

@@ -242,7 +242,12 @@ export default function DashboardLayout() {
                           key={n.id}
                           onClick={() => {
                             if (!n.is_read) markReadMutation.mutate(n.id);
-                            // Bisa tambah navigasi ke halaman terkait di sini
+                            setIsNotificationOpen(false);
+                            // Navigasi berdasarkan tipe notifikasi
+                            if (n.type === 'registration') navigate('/master/registrations');
+                            else if (n.type === 'log_book') navigate('/master/log-books');
+                            else if (n.type === 'report') navigate('/master/reports');
+                            else if (n.type === 'intern') navigate('/master/interns');
                           }}
                           className={cn(
                             "p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors last:border-0",

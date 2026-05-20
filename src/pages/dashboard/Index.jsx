@@ -161,8 +161,8 @@ export default function Dashboard() {
     },
     {
       label: 'Penilaian Selesai',
-      value: formatNumber(overview.global_graduated_interns),
-      helper: `Peserta yang sudah lulus`,
+      value: formatNumber(overview.completed_assessments),
+      helper: `Peserta telah dinilai`,
       icon: CheckCircle2,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10'
@@ -322,9 +322,20 @@ export default function Dashboard() {
                                  { step: 2, label: 'Aktivitas Magang', desc: 'Mulai mengisi log book harian dan laporan mingguan.', active: true },
                                  { step: 3, label: 'Klaim Sertifikat', desc: 'Unggah laporan akhir Anda untuk mendapatkan sertifikat magang resmi.', active: false },
                                ];
-                             } else if (status === 'interview') {
+                             } else if (status === 'interview' || status === 'interview1' || status === 'interview2') {
+                               const formattedInterviewDate = user.registration?.interview_date 
+                                 ? new Date(user.registration.interview_date).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB'
+                                 : '';
+
                                steps = [
-                                 { step: 1, label: 'Sesi Wawancara', desc: 'Siapkan diri Anda untuk diskusi teknis dengan mentor.', active: true },
+                                 { 
+                                   step: 1, 
+                                   label: 'Sesi Wawancara', 
+                                   desc: formattedInterviewDate 
+                                     ? `Wawancara Anda dijadwalkan pada: ${formattedInterviewDate}`
+                                     : 'Siapkan diri Anda untuk diskusi teknis dengan mentor.', 
+                                   active: true 
+                                 },
                                  { step: 2, label: 'Pengumuman Akhir', desc: 'Hasil seleksi wawancara akan diinfokan segera.', active: false },
                                  { step: 3, label: 'Persiapan Masuk', desc: 'Persiapkan dokumen onboarding jika diterima.', active: false },
                                ];
