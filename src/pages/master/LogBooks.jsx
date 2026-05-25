@@ -428,7 +428,7 @@ export default function LogBooks() {
       className: "text-right",
       cell: (row) => {
         let canManage = isAdmin || (!isMentor && (!row.user?.id || row.user.id === currentUserId) && isInternActive);
-        if (isStudent && (row.validation === 'waiting' || row.validation === 'approved' || row.validation === true || row.validation === '1')) {
+        if (isStudent && (row.validation === 'approved' || row.validation === true || row.validation === '1')) {
           canManage = false;
         }
 

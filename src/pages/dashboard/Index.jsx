@@ -134,6 +134,12 @@ export default function Dashboard() {
   const totalStatusRegistrations = statusChart.reduce((total, item) => total + Number(item.total || 0), 0)
   const maxStatusTotal = Math.max(...statusChart.map((item) => Number(item.total || 0)), 1)
 
+  const { data: myScoreData } = useQuery({
+    queryKey: ['my-score', user?.registration?.id],
+    queryFn: async () => (await api.get(`/master/scores/registration/${user.registration.id}`)).data.data,
+    enabled: !!user?.registration?.id && user?.registration?.status === 'accepted',
+  })
+
   const stats = isMentor ? [
     {
       label: 'Peserta Bimbingan',
@@ -410,6 +416,29 @@ export default function Dashboard() {
                              </div>
                            </div>
                         </div>
+
+                        {myScoreData && myScoreData.summary?.total_criteria > 0 && (
+                          <div className="space-y-6 mt-12">
+                            <h4 className="text-lg font-bold flex items-center gap-2">
+                              <div className="w-2 h-6 bg-emerald-500 rounded-full"></div>
+                              Nilai Akhir Magang
+                            </h4>
+                            <div className="bg-emerald-500/10 rounded-3xl p-8 border border-emerald-500/20 relative overflow-hidden">
+                              <div className="absolute -right-4 -bottom-4 opacity-10">
+                                <Award size={120} className="text-emerald-500" />
+                              </div>
+                              <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                                <div className="w-24 h-24 rounded-2xl bg-emerald-500 text-white flex flex-col items-center justify-center font-black shadow-xl shadow-emerald-500/30 shrink-0">
+                                  <span className="text-3xl">{myScoreData.summary?.average_score?.toFixed(2)}</span>
+                                </div>
+                                <div className="text-center md:text-left">
+                                  <p className="text-emerald-800 font-bold text-lg mb-1">Sudah Dinilai!</p>
+                                  <p className="text-sm text-emerald-700/80">Mentor Anda telah memberikan penilaian untuk {myScoreData.summary?.total_criteria} parameter penilaian magang.</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                    </div>
                 </div>

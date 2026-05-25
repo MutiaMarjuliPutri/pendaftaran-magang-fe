@@ -21,7 +21,11 @@ export default function ApplyInternship() {
     semester: '',
     program_code: '',
     position_id: '',
-    duration: '6'
+    duration: '6',
+    start_month: '',
+    end_month: '',
+    start_date: '',
+    end_date: ''
   });
 
   useEffect(() => {
@@ -175,6 +179,39 @@ export default function ApplyInternship() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Durasi (Bulan)</label>
                   <input type="number" name="duration" value={formData.duration} onChange={handleChange} required min="1" max="12" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none" />
+                </div>
+                
+                {/* Detail Durasi Baru */}
+                <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Dari Bulan</label>
+                    <select name="start_month" value={formData.start_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
+                      <option value="">Pilih Bulan Mulai</option>
+                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Sampai Bulan</label>
+                    <select name="end_month" value={formData.end_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
+                      <option value="">Pilih Bulan Selesai</option>
+                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tanggal Mulai</label>
+                    <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tanggal Selesai</label>
+                    <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
+                  </div>
                 </div>
               </div>
             </section>

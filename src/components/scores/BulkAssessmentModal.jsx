@@ -53,13 +53,23 @@ export default function BulkAssessmentModal({ isOpen, onClose, registrations = [
     }
   };
 
+  const getKeterangan = (score) => {
+    if (score > 80) return "SANGAT BAIK";
+    if (score >= 71) return "BAIK";
+    if (score >= 61) return "CUKUP";
+    return "KURANG";
+  };
+
   const handleScoreChange = (criteriaId, value) => {
     const numValue = Math.min(100, Math.max(0, parseFloat(value) || 0));
+    const autoNotes = getKeterangan(numValue);
+    
     setScores(prev => ({
       ...prev,
       [criteriaId]: { 
         ...prev[criteriaId], 
-        score: numValue
+        score: numValue,
+        notes: autoNotes
       }
     }));
   };

@@ -25,6 +25,7 @@ import ApplyInternship from "@/pages/ApplyInternship";
 import PublicApply from "@/pages/PublicApply";
 import Certificate from "@/pages/Certificate";
 import Profile from "@/pages/Profile";
+import MyScores from "@/pages/student/MyScores";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -72,6 +73,7 @@ function App() {
         <Route path="/master/report-types" element={<ReportTypes />} />
         <Route path="/master/reports" element={<Reports />} />
         <Route path="/master/log-books" element={<LogBooks />} />
+        <Route path="/my-scores" element={<MyScores />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

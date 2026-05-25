@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Trash2, Download, User, CheckCircle, XCircle, Clock, Award, FileText, Upload, Eye } from "lucide-react";
+import { Trash2, Download, User, CheckCircle, XCircle, Clock, Award, FileText, Upload, Eye, Edit2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,7 +31,7 @@ export default function Reports() {
   const isMentor = userRole === 'mentor';
   const isAccepted = user?.registration?.status?.toLowerCase() === 'accepted';
   
-  const { data, isLoading, pagination, setParams, createMutation, deleteMutation } = useCrud("/master/reports", "reports");
+  const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/reports", "reports");
   const { data: reportTypes } = useQuery({ queryKey: ["report-types-all"], queryFn: async () => (await api.get("/master/report-types/all")).data.data });
 
   // Auto-filter for students
@@ -45,9 +45,10 @@ export default function Reports() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [revisionModal, setRevisionModal] = useState(null);
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => api.patch(`/master/reports/${id}/status`, { status }),
+    mutationFn: ({ id, status, reviewer_comment }) => api.patch(`/master/reports/${id}/status`, { status, reviewer_comment }),
     onSuccess: () => {
       queryClient.invalidateQueries(["reports"]);
       toast.success("Status laporan berhasil diperbarui");
@@ -79,6 +80,17 @@ export default function Reports() {
     setIsModalOpen(true);
   };
 
+  const onEdit = (row) => {
+    setSelectedItem(row);
+    reset({
+      title: row.title,
+      content: row.content || "",
+      file_path: row.file_path || "",
+      intern_id: row.intern_id || user?.registration?.intern_id
+    });
+    setIsModalOpen(true);
+  };
+
   const onSubmit = (formData) => {
     const payload = {
       ...formData,
@@ -86,12 +98,22 @@ export default function Reports() {
       // Gunakan ID jenis laporan pertama yang tersedia
       report_type_id: reportTypes && reportTypes.length > 0 ? reportTypes[0].id : null
     };
-    createMutation.mutate(payload, { 
-      onSuccess: () => { 
-        setIsModalOpen(false); 
-        reset(); 
-      } 
-    });
+    
+    if (selectedItem) {
+      updateMutation.mutate({ id: selectedItem.id, updatedData: payload }, {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          reset();
+        }
+      });
+    } else {
+      createMutation.mutate(payload, { 
+        onSuccess: () => { 
+          setIsModalOpen(false); 
+          reset(); 
+        } 
+      });
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -124,6 +146,11 @@ export default function Reports() {
         <div className="flex flex-col">
           <span className="font-bold text-sm">{row.title}</span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Laporan Akhir Magang</span>
+          {row.status === 'revision' && row.reviewer_comment && (
+            <div className="mt-1 p-2 bg-amber-50 rounded-lg text-amber-700 text-[10px] border border-amber-200">
+              <span className="font-bold">Catatan Revisi:</span> {row.reviewer_comment}
+            </div>
+          )}
         </div>
       ),
     },
@@ -148,7 +175,14 @@ export default function Reports() {
           {(isMentor) ? (
             <select
               value={row.status || "submitted"}
-              onChange={(e) => updateStatusMutation.mutate({ id: row.id, status: e.target.value })}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                if (newStatus === 'revision') {
+                  setRevisionModal(row);
+                } else {
+                  updateStatusMutation.mutate({ id: row.id, status: newStatus });
+                }
+              }}
               className={cn(
                 "text-[10px] font-bold px-2 py-1 rounded-full border outline-none cursor-pointer",
                 row.status === 'approved' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
@@ -192,7 +226,7 @@ export default function Reports() {
       header: "Aksi",
       className: "text-right",
       cell: (row) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end items-center gap-2">
           {row.file_path && (
             <a 
               href={`${BASE_URL}${row.file_path}`} 
@@ -204,16 +238,29 @@ export default function Reports() {
               <Download size={16} />
             </a>
           )}
-          <button
-            onClick={() => {
-              setSelectedItem(row);
-              setIsDeleteOpen(true);
-            }}
-            className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-            disabled={row.status === 'approved' && isStudent}
-          >
-            <Trash2 size={16} />
-          </button>
+          {!isMentor && (
+            <>
+              <button
+                onClick={() => onEdit(row)}
+                className={cn("p-2 rounded-lg transition-colors", row.status === 'approved' && isStudent ? "opacity-30 cursor-not-allowed text-gray-400" : "hover:bg-primary/10 text-primary")}
+                disabled={row.status === 'approved' && isStudent}
+                title="Edit Laporan"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedItem(row);
+                  setIsDeleteOpen(true);
+                }}
+                className={cn("p-2 rounded-lg transition-colors", row.status === 'approved' && isStudent ? "opacity-30 cursor-not-allowed text-gray-400" : "hover:bg-destructive/10 text-destructive")}
+                disabled={row.status === 'approved' && isStudent}
+                title="Hapus Laporan"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -251,9 +298,9 @@ export default function Reports() {
       <FormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Unggah Laporan Baru"
+        title={selectedItem ? "Edit Laporan" : "Unggah Laporan Baru"}
         onSubmit={handleSubmit(onSubmit)}
-        isLoading={createMutation.isLoading}
+        isLoading={createMutation.isLoading || updateMutation?.isLoading}
       >
         <div className="space-y-5">
           <div className="space-y-2">
@@ -292,6 +339,39 @@ export default function Reports() {
       </FormModal>
 
       <DeleteConfirm isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => deleteMutation.mutate(selectedItem.id, { onSuccess: () => setIsDeleteOpen(false) })} isLoading={deleteMutation.isLoading} />
+
+      {revisionModal && (
+        <FormModal
+          isOpen={!!revisionModal}
+          onClose={() => setRevisionModal(null)}
+          title="Catatan Revisi Laporan"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const note = e.target.elements.reviewer_comment.value;
+            updateStatusMutation.mutate({ 
+              id: revisionModal.id, 
+              status: 'revision', 
+              reviewer_comment: note 
+            }, {
+              onSuccess: () => setRevisionModal(null)
+            });
+          }}
+          isLoading={updateStatusMutation.isLoading || updateStatusMutation.isPending}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Catatan Revisi <span className="text-red-500">*</span></label>
+              <textarea 
+                name="reviewer_comment"
+                defaultValue={revisionModal.reviewer_comment || ""}
+                required
+                className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all" 
+                placeholder="Tuliskan apa saja yang perlu direvisi oleh peserta..." 
+              />
+            </div>
+          </div>
+        </FormModal>
+      )}
     </>
   );
 }

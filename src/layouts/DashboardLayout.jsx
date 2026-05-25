@@ -24,6 +24,7 @@ const menuItems = [
   { icon: Award, label: "Penilaian Magang", path: "/master/scores", roles: ["admin", "mentor"] },
   { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
   { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["mentor", "student", "intern"] },
+  { icon: Award, label: "Nilai Saya", path: "/my-scores", roles: ["student", "intern"] },
 ];
 
 export default function DashboardLayout() {
@@ -97,6 +98,13 @@ export default function DashboardLayout() {
     // Jika menu "Log Book" atau "Laporan & Sertifikat", sembunyikan untuk student yang belum diterima
     if (item.path === "/master/log-books" || item.path === "/master/reports") {
       if ((userRole === 'student' || userRole === 'intern') && user?.registration?.status?.toLowerCase() !== 'accepted') {
+        return false;
+      }
+    }
+
+    // Sembunyikan "Nilai Saya" untuk student yang belum diterima
+    if (item.path === "/my-scores") {
+      if (user?.registration?.status?.toLowerCase() !== 'accepted') {
         return false;
       }
     }

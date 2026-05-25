@@ -3,7 +3,8 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar } from "lucide-react";
+import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar, Award } from "lucide-react";
+import BulkAssessmentModal from "@/components/scores/BulkAssessmentModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,6 +26,7 @@ export default function Registrations() {
   const { data: programs } = useQuery({ queryKey: ["programs-all"], queryFn: async () => (await api.get("/master/internship-programs/all")).data.data });
   const { data: statuses } = useQuery({ queryKey: ["statuses-all"], queryFn: async () => (await api.get("/master/registration-statuses/all")).data.data });
   const { data: placements } = useQuery({ queryKey: ["placements-all"], queryFn: async () => (await api.get("/master/placements/all")).data.data });
+  const { data: criteria } = useQuery({ queryKey: ["criteria-all"], queryFn: async () => (await api.get("/master/assessment-criteria/all")).data.data });
 
   const [activeStatus, setActiveStatus] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +37,8 @@ export default function Registrations() {
   const [uploading, setUploading] = useState(false);
   const [cvFileName, setCvFileName] = useState("");
   const [cvFileUrl, setCvFileUrl] = useState("");
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkModalRegId, setBulkModalRegId] = useState("");
 
   const {
     register,
@@ -549,6 +553,20 @@ export default function Registrations() {
                         <span className="text-muted-foreground">Durasi:</span>
                         <p className="font-medium">{selectedDetailItem.duration} Bulan</p>
                       </div>
+                      {selectedDetailItem.start_month && selectedDetailItem.end_month && (
+                        <div>
+                          <span className="text-muted-foreground">Bulan Pelaksanaan:</span>
+                          <p className="font-medium">{selectedDetailItem.start_month} - {selectedDetailItem.end_month}</p>
+                        </div>
+                      )}
+                      {selectedDetailItem.start_date && selectedDetailItem.end_date && (
+                        <div>
+                          <span className="text-muted-foreground">Tanggal Pelaksanaan:</span>
+                          <p className="font-medium">
+                            {new Date(selectedDetailItem.start_date).toLocaleDateString("id-ID")} - {new Date(selectedDetailItem.end_date).toLocaleDateString("id-ID")}
+                          </p>
+                        </div>
+                      )}
                       <div>
                         <span className="text-muted-foreground">Batch:</span>
                         <p className="font-medium">{selectedDetailItem.intern?.batch || "-"}</p>
@@ -595,14 +613,34 @@ export default function Registrations() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
-              <button onClick={() => setSelectedDetailItem(null)} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90 transition-all">
+            <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-between items-center gap-3">
+              {selectedDetailItem.status?.name === 'accepted' && (
+                <button
+                  onClick={() => {
+                    setBulkModalRegId(selectedDetailItem.id);
+                    setIsBulkModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold shadow-sm hover:bg-emerald-700 transition-all"
+                >
+                  <Award size={16} /> Beri / Edit Penilaian
+                </button>
+              )}
+              <button onClick={() => setSelectedDetailItem(null)} className="ml-auto px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90 transition-all">
                 Tutup
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <BulkAssessmentModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        registrations={data?.rows || data || []}
+        criteria={criteria}
+        initialRegistrationId={bulkModalRegId}
+        onSuccess={() => {}}
+      />
     </>
   );
 }
