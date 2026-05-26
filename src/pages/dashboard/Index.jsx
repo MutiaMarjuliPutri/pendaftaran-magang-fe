@@ -121,6 +121,14 @@ export default function Dashboard() {
     enabled: isStaff,
   })
 
+  // Fetch best interns for ALL authenticated users (students can see this too)
+  const { data: bestInternsData } = useQuery({
+    queryKey: ['best-interns'],
+    queryFn: async () => (await api.get('/master/dashboard')).data.data?.best_interns || [],
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // cache 5 minutes
+  })
+
   const overview = dashboard?.overview || {}
   const charts = dashboard?.charts || {}
   
@@ -129,7 +137,8 @@ export default function Dashboard() {
   const statusChart = charts.registrations_by_status || []
   const topPrograms = charts.top_programs_by_registrations || []
   const latestRegistrations = dashboard?.latest_registrations || []
-  const bestInterns = dashboard?.best_interns || []
+  // Use dedicated best-interns query so students can also see it
+  const bestInterns = isStaff ? (dashboard?.best_interns || []) : (bestInternsData || [])
   const pendingLists = dashboard?.pending_lists || { log_books: [], reports: [] }
   const totalStatusRegistrations = statusChart.reduce((total, item) => total + Number(item.total || 0), 0)
   const maxStatusTotal = Math.max(...statusChart.map((item) => Number(item.total || 0)), 1)

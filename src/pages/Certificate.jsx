@@ -46,10 +46,10 @@ export default function Certificate() {
     <div className="min-h-screen bg-gray-200 py-10 px-4 print:p-0 print:bg-white flex flex-col items-center justify-center font-sans">
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
           
-          .font-script {
-            font-family: 'Great Vibes', cursive;
+          .font-certificate-name {
+            font-family: 'Playfair Display', serif;
           }
           .font-montserrat {
             font-family: 'Montserrat', sans-serif;
@@ -176,7 +176,7 @@ export default function Certificate() {
             DIBERIKAN KEPADA :
           </p>
           
-          <h2 className="text-[5rem] font-script text-gray-900 mb-8" style={{ textShadow: "1px 1px 0px rgba(0,0,0,0.1)", lineHeight: "1.2" }}>
+          <h2 className="text-[4.5rem] font-certificate-name font-bold italic text-gray-900 mb-8 tracking-wide" style={{ textShadow: "1px 1px 0px rgba(0,0,0,0.1)", lineHeight: "1.2" }}>
             {internName}
           </h2>
           

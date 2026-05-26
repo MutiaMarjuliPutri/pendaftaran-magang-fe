@@ -19,7 +19,7 @@ import ReportTypes from "@/pages/master/ReportTypes";
 import Reports from "@/pages/master/Reports";
 import LogBooks from "@/pages/master/LogBooks";
 
-import Home from "@/pages/Home";
+import HomeModern from "@/pages/HomeModern";
 import Register from "@/pages/auth/Register";  
 import ApplyInternship from "@/pages/ApplyInternship";
 import PublicApply from "@/pages/PublicApply";
@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<HomeModern />} />
       <Route path="/register" element={<PublicApply />} />  
       <Route path="/login" element={<Login />} />
 
