@@ -72,53 +72,22 @@ export default function HomeModern() {
     setSelectedProgram(null);
   };
 
-  const programs = [
-    {
-      id: 1,
-      program_code: "FRONT-001",
-      program_name: "Frontend Developer",
-      description: "Belajar membangun antarmuka web modern menggunakan React.js, Tailwind CSS, dan mengintegrasikan dengan REST API.",
-      quota: 10,
-      registration_start: "2025-11-10",
-      registration_end: "2025-11-30"
-    },
-    {
-      id: 2,
-      program_code: "BACK-001",
-      program_name: "Backend Developer",
-      description: "Pelajari pengembangan backend dengan Node.js, Express, dan database SQL. Bangun API yang handal dan scalable.",
-      quota: 8,
-      registration_start: "2025-11-10",
-      registration_end: "2025-11-30"
-    },
-    {
-      id: 3,
-      program_code: "UIUX-001",
-      program_name: "UI/UX Designer",
-      description: "Kuasai desain antarmuka pengguna, user research, prototyping dengan Figma, dan menciptakan pengalaman digital yang menarik.",
-      quota: 5,
-      registration_start: "2025-11-10",
-      registration_end: "2025-11-30"
-    },
-    {
-      id: 4,
-      program_code: "BA-001",
-      program_name: "Business Analyst",
-      description: "Pelajari analisis kebutuhan bisnis, pembuatan dokumentasi, dan kolaborasi dengan tim developer untuk menghasilkan solusi tepat guna.",
-      quota: 6,
-      registration_start: "2025-11-10",
-      registration_end: "2025-11-30"
-    },
-    {
-      id: 5,
-      program_code: "QA-001",
-      program_name: "Quality Assurance",
-      description: "Pelajari proses testing, manual testing, automation testing, dan memastikan kualitas aplikasi sebelum dirilis ke pengguna.",
-      quota: 7,
-      registration_start: "2025-11-10",
-      registration_end: "2025-11-30"
-    }
-  ];
+  const [programs, setPrograms] = useState([]);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const response = await api.get('/public/programs');
+        setPrograms(response.data?.data || []);
+      } catch (error) {
+        console.error('Gagal mengambil data program', error);
+      } finally {
+        setIsLoadingPrograms(false);
+      }
+    };
+    fetchPrograms();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans relative overflow-x-hidden text-[#111827]">
@@ -172,10 +141,29 @@ export default function HomeModern() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6">
-                <span className={`w-2 h-2 rounded-full ${periodStatus === 'open' ? 'bg-red-900' : 'bg-gray-400'}`}></span>
-                {isLoadingStatus ? 'Memuat status...' : periodStatus === 'open' ? `Pendaftaran ${currentPeriod?.period_name} Dibuka` : 'Pendaftaran Ditutup'}
-              </div>
+              {isLoadingStatus ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                  Memuat status...
+                </div>
+              ) : periodStatus === 'open' ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 text-red-900 text-[11px] font-semibold tracking-wide mb-6">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
+                  </span>
+                  Pendaftaran {currentPeriod?.period_name} Dibuka
+                </div>
+              ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
+                <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">
+                  🎉 Pengumuman Peserta Diterima
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6">
+                  <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                  Pendaftaran Ditutup
+                </div>
+              )}
 
               <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold tracking-tight text-[#111827] mb-6 leading-[1.05]">
                 Mulai Karir Profesional <br />
@@ -193,14 +181,23 @@ export default function HomeModern() {
                 >
                   Jelajahi Program <ArrowRight className="w-4 h-4" />
                 </button>
-                <a
-                  href="https://rapiertechnology.co.id"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                >
-                  Lihat Profil Perusahaan
-                </a>
+                {periodStatus === 'announcement' || periodStatus === 'announced' ? (
+                  <button
+                    onClick={fetchAnnouncement}
+                    className="px-8 py-4 rounded-xl bg-white border border-red-200 text-red-900 font-bold hover:bg-red-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-red-900/5 animate-bounce"
+                  >
+                    Lihat Pengumuman
+                  </button>
+                ) : (
+                  <a
+                    href="https://rapiertechnology.co.id"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-8 py-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    Lihat Profil Perusahaan
+                  </a>
+                )}
               </div>
 
               {/* Stats/Trusted By */}
@@ -260,11 +257,11 @@ export default function HomeModern() {
                 <div className="mb-4">
                    <div className="flex items-center justify-between mb-4">
                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primaryColor} bg-red-900/5`}>
-                        {program.program_code.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
-                        {program.program_code.includes('BACK') && <Database className="w-5 h-5" />}
-                        {program.program_code.includes('UIUX') && <PenTool className="w-5 h-5" />}
-                        {program.program_code.includes('BA') && <Briefcase className="w-5 h-5" />}
-                        {program.program_code.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
+                        {program.program_code?.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
+                        {program.program_code?.includes('BACK') && <Database className="w-5 h-5" />}
+                        {program.program_code?.includes('UIUX') && <PenTool className="w-5 h-5" />}
+                        {program.program_code?.includes('BA') && <Briefcase className="w-5 h-5" />}
+                        {program.program_code?.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
                      </div>
                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-900/60 bg-red-50 px-2 py-1 rounded-md">{program.program_code}</span>
                    </div>
@@ -488,11 +485,19 @@ export default function HomeModern() {
             <div>
                <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">PROGRAM MAGANG</h4>
                <ul className="space-y-3">
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Frontend Developer</a></li>
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Backend Developer</a></li>
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>UI/UX Designer</a></li>
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Business Analyst</a></li>
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Quality Assurance</a></li>
+                  {programs.map((program) => (
+                    <li key={program.id}>
+                      <button
+                        onClick={() => {
+                          document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
+                          setTimeout(() => openModal(program), 600);
+                        }}
+                        className={`text-sm text-gray-600 hover:text-red-900 transition-colors text-left`}
+                      >
+                        {program.program_name}
+                      </button>
+                    </li>
+                  ))}
                </ul>
             </div>
 
@@ -538,7 +543,7 @@ export default function HomeModern() {
                <div className="mb-8">
                   <h3 className="text-lg font-bold text-red-900 mb-3">📌 Rincian Penugasan/Tanggung Jawab</h3>
                   <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
-                    {selectedProgram.id === 1 && (
+                    {selectedProgram.program_code?.includes('FRONT') && (
                       <>
                         <li>Membangun komponen UI menggunakan React.js dan Tailwind CSS</li>
                         <li>Mengintegrasikan frontend dengan REST API</li>
@@ -547,7 +552,7 @@ export default function HomeModern() {
                         <li>Melakukan debugging dan optimasi performa</li>
                       </>
                     )}
-                    {selectedProgram.id === 2 && (
+                    {selectedProgram.program_code?.includes('BACK') && (
                       <>
                         <li>Mengembangkan REST API menggunakan Node.js dan Express</li>
                         <li>Merancang dan mengoptimalkan database SQL</li>
@@ -556,7 +561,7 @@ export default function HomeModern() {
                         <li>Dokumentasi API</li>
                       </>
                     )}
-                    {selectedProgram.id === 3 && (
+                    {selectedProgram.program_code?.includes('UIUX') && (
                       <>
                         <li>Melakukan user research dan analisis kebutuhan</li>
                         <li>Membuat wireframe, mockup, dan prototype di Figma</li>
@@ -565,7 +570,7 @@ export default function HomeModern() {
                         <li>Melakukan usability testing</li>
                       </>
                     )}
-                    {selectedProgram.id === 4 && (
+                    {selectedProgram.program_code?.includes('BA') && (
                       <>
                         <li>Mengumpulkan dan menganalisis kebutuhan bisnis</li>
                         <li>Membuat dokumentasi BRD dan FRD</li>
@@ -574,7 +579,7 @@ export default function HomeModern() {
                         <li>Membantu dalam proses testing UAT</li>
                       </>
                     )}
-                    {selectedProgram.id === 5 && (
+                    {selectedProgram.program_code?.includes('QA') && (
                       <>
                         <li>Membuat test plan dan test case</li>
                         <li>Melakukan manual testing dan regression testing</li>
@@ -590,19 +595,19 @@ export default function HomeModern() {
                   <div>
                     <h3 className="text-lg font-bold text-red-900 mb-4">💻 Kompetensi Teknis</h3>
                     <div className="flex flex-wrap gap-2">
-                      {selectedProgram.id === 1 && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
+                      {selectedProgram.program_code?.includes('FRONT') && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
                         <span key={i} className="px-2 py-1 bg-green-50 text-green-700 border border-green-100 rounded-md text-xs font-medium">{skill}</span>
                       ))}
-                      {selectedProgram.id === 2 && ['Node.js', 'Express.js', 'PostgreSQL', 'REST API', 'Git', 'JWT'].map((skill, i) => (
+                      {selectedProgram.program_code?.includes('BACK') && ['Node.js', 'Express.js', 'PostgreSQL', 'REST API', 'Git', 'JWT'].map((skill, i) => (
                         <span key={i} className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-xs font-medium">{skill}</span>
                       ))}
-                      {selectedProgram.id === 3 && ['Figma', 'Adobe XD', 'Wireframing', 'Prototyping', 'User Research'].map((skill, i) => (
+                      {selectedProgram.program_code?.includes('UIUX') && ['Figma', 'Adobe XD', 'Wireframing', 'Prototyping', 'User Research'].map((skill, i) => (
                         <span key={i} className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-100 rounded-md text-xs font-medium">{skill}</span>
                       ))}
-                      {selectedProgram.id === 4 && ['BRD/FRD', 'UML', 'BPMN', 'Analytical Thinking', 'Excel'].map((skill, i) => (
+                      {selectedProgram.program_code?.includes('BA') && ['BRD/FRD', 'UML', 'BPMN', 'Analytical Thinking', 'Excel'].map((skill, i) => (
                         <span key={i} className="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-md text-xs font-medium">{skill}</span>
                       ))}
-                      {selectedProgram.id === 5 && ['Manual Testing', 'Test Case', 'Bug Reporting', 'Selenium', 'Postman'].map((skill, i) => (
+                      {selectedProgram.program_code?.includes('QA') && ['Manual Testing', 'Test Case', 'Bug Reporting', 'Selenium', 'Postman'].map((skill, i) => (
                         <span key={i} className="px-2 py-1 bg-red-50 text-red-700 border border-red-100 rounded-md text-xs font-medium">{skill}</span>
                       ))}
                     </div>
@@ -667,6 +672,83 @@ export default function HomeModern() {
                   {periodStatus === 'open' ? 'Daftar Sekarang' : 'Pendaftaran Ditutup'} <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pengumuman */}
+      {isAnnouncementModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header - Ukuran Normal */}
+            <div className="bg-gradient-to-r from-red-900 to-red-800 px-6 py-4 flex justify-between items-center text-white">
+              <div>
+                <h2 className="text-xl font-bold">🎉 Pengumuman Peserta Magang</h2>
+                <p className="text-red-100 text-sm mt-1">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
+                {!isLoadingAnnouncement && acceptedInterns.length > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-semibold">
+                    <Users className="w-3.5 h-3.5" />
+                    Total {acceptedInterns.length} Peserta Diterima
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl transition-colors shrink-0 ml-3"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body - List Peserta */}
+            <div className="p-5 overflow-y-auto flex-1 bg-gray-50">
+              {isLoadingAnnouncement ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-900 mb-3"></div>
+                  <p className="text-gray-500 text-sm">Memuat data pengumuman...</p>
+                </div>
+              ) : acceptedInterns.length > 0 ? (
+                <div className="space-y-2">
+                  {acceptedInterns.map((intern, idx) => (
+                    <div key={intern.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 hover:shadow-md hover:border-red-200 transition-all duration-200">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700 to-red-900 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 text-sm truncate">{intern.name}</h3>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                          <Building2 className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{intern.university || '-'}</span>
+                        </p>
+                        {intern.major && (
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">{intern.major}</p>
+                        )}
+                      </div>
+                      <div className="px-2 py-1 bg-red-50 text-red-800 border border-red-100 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        ✓ DITERIMA
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-base font-semibold text-gray-900">Belum ada data</h3>
+                  <p className="text-xs text-gray-500 mt-1">Daftar peserta yang diterima belum diumumkan.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer - Tombol */}
+            <div className="p-4 bg-white border-t border-gray-100 flex justify-center">
+              <button
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"
+              >
+                Tutup Pengumuman
+              </button>
             </div>
           </div>
         </div>

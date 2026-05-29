@@ -450,82 +450,82 @@ export default function Home() {
         </div>
       )}
 
-     {/* Modal Pengumuman */}
-{isAnnouncementModalOpen && (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
-    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
-      
-      {/* Header - Ukuran Normal */}
-      <div className="bg-gradient-to-r from-red-900 to-red-800 px-6 py-4 flex justify-between items-center text-white">
-        <div>
-          <h2 className="text-xl font-bold">🎉 Pengumuman Peserta Magang</h2>
-          <p className="text-red-100 text-sm mt-1">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
-          {!isLoadingAnnouncement && acceptedInterns.length > 0 && (
-            <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-semibold">
-              <Users className="w-3.5 h-3.5" />
-              Total {acceptedInterns.length} Peserta Diterima
-            </div>
-          )}
-        </div>
-        <button 
-          onClick={() => setIsAnnouncementModalOpen(false)} 
-          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl transition-colors shrink-0 ml-3"
-        >
-          ✕
-        </button>
-      </div>
+      {/* Modal Pengumuman */}
+      {isAnnouncementModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsAnnouncementModalOpen(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
 
-      {/* Body - List Peserta */}
-      <div className="p-5 overflow-y-auto flex-1 bg-gray-50">
-        {isLoadingAnnouncement ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-900 mb-3"></div>
-            <p className="text-gray-500 text-sm">Memuat data pengumuman...</p>
-          </div>
-        ) : acceptedInterns.length > 0 ? (
-          <div className="space-y-2">
-            {acceptedInterns.map((intern, idx) => (
-              <div key={intern.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 hover:shadow-md hover:border-red-200 transition-all duration-200">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700 to-red-900 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 text-sm truncate">{intern.name}</h3>
-                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 truncate">
-                    <Building2 className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{intern.university || '-'}</span>
-                  </p>
-                  {intern.major && (
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{intern.major}</p>
-                  )}
-                </div>
-                <div className="px-2 py-1 bg-red-50 text-red-800 border border-red-100 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0">
-                  ✓ DITERIMA
-                </div>
+            {/* Header - Ukuran Normal */}
+            <div className="bg-gradient-to-r from-red-900 to-red-800 px-6 py-4 flex justify-between items-center text-white">
+              <div>
+                <h2 className="text-xl font-bold">🎉 Pengumuman Peserta Magang</h2>
+                <p className="text-red-100 text-sm mt-1">Selamat kepada seluruh peserta yang diterima dalam program magang kami!</p>
+                {!isLoadingAnnouncement && acceptedInterns.length > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-semibold">
+                    <Users className="w-3.5 h-3.5" />
+                    Total {acceptedInterns.length} Peserta Diterima
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-gray-900">Belum ada data</h3>
-            <p className="text-xs text-gray-500 mt-1">Daftar peserta yang diterima belum diumumkan.</p>
-          </div>
-        )}
-      </div>
+              <button
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl transition-colors shrink-0 ml-3"
+              >
+                ✕
+              </button>
+            </div>
 
-      {/* Footer - Tombol */}
-      <div className="p-4 bg-white border-t border-gray-100 flex justify-center">
-        <button 
-          onClick={() => setIsAnnouncementModalOpen(false)} 
-          className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"
-        >
-          Tutup Pengumuman
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            {/* Body - List Peserta */}
+            <div className="p-5 overflow-y-auto flex-1 bg-gray-50">
+              {isLoadingAnnouncement ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-900 mb-3"></div>
+                  <p className="text-gray-500 text-sm">Memuat data pengumuman...</p>
+                </div>
+              ) : acceptedInterns.length > 0 ? (
+                <div className="space-y-2">
+                  {acceptedInterns.map((intern, idx) => (
+                    <div key={intern.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 hover:shadow-md hover:border-red-200 transition-all duration-200">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700 to-red-900 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 text-sm truncate">{intern.name}</h3>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                          <Building2 className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{intern.university || '-'}</span>
+                        </p>
+                        {intern.major && (
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">{intern.major}</p>
+                        )}
+                      </div>
+                      <div className="px-2 py-1 bg-red-50 text-red-800 border border-red-100 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        ✓ DITERIMA
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-base font-semibold text-gray-900">Belum ada data</h3>
+                  <p className="text-xs text-gray-500 mt-1">Daftar peserta yang diterima belum diumumkan.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer - Tombol */}
+            <div className="p-4 bg-white border-t border-gray-100 flex justify-center">
+              <button
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"
+              >
+                Tutup Pengumuman
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Program Details Section */}
       <section className="py-24">
