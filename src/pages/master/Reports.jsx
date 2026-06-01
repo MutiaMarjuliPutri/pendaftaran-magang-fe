@@ -163,7 +163,7 @@ export default function Reports() {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-semibold">{row.intern?.name || "N/A"}</span>
-            <span className="text-[10px] text-muted-foreground">{new Date(row.createdAt).toLocaleDateString("id-ID")}</span>
+            <span className="text-[10px] text-muted-foreground">{row.report_date ? new Date(row.report_date).toLocaleDateString("id-ID") : "-"}</span>
           </div>
         </div>
       ),
