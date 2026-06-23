@@ -37,7 +37,14 @@ export default function MentorInterns() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/mentor-interns", "mentor-interns");
 
   const { data: interns } = useQuery({ queryKey: ["interns-all"], queryFn: async () => (await api.get("/master/interns/all")).data.data });
-  const { data: mentors } = useQuery({ queryKey: ["mentors-all"], queryFn: async () => (await api.get("/master/users/all", { params: { role_code: "mentor" } })).data.data });
+  const { data: mentors } = useQuery({
+    queryKey: ["mentors-all"],
+    queryFn: async () => {
+      const resp = await api.get("/master/users/all", { params: { role_code: "mentor" } });
+      console.log('Fetched mentors:', resp.data.data);
+      return resp.data.data;
+    }
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -196,7 +203,7 @@ export default function MentorInterns() {
               <option value="">Pilih Mentor</option>
               {mentors?.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.fullname || m.full_name}
+                  {m.full_name || m.fullname}
                 </option>
               ))}
             </select>

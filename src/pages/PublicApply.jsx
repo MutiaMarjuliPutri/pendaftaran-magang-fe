@@ -31,12 +31,10 @@ export default function PublicApply() {
     position_id: '',
     duration: '6',
     start_month: '',
-    end_month: '',
-    start_date: '',
-    end_date: ''
+    end_month: ''
   });
 
-  const today = new Date().toISOString().split('T')[0];
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,14 +90,7 @@ export default function PublicApply() {
       toast.error('Harap upload file CV (PDF)');
       return;
     }
-    if (formData.start_date && formData.start_date < today) {
-      toast.error('Tanggal mulai tidak boleh di masa lalu!');
-      return;
-    }
-    if (formData.start_date && formData.end_date && new Date(formData.end_date) < new Date(formData.start_date)) {
-      toast.error('Tanggal selesai tidak boleh sebelum tanggal mulai!');
-      return;
-    }
+
     if (formData.password !== confirmPassword) {
       toast.error('Konfirmasi kata sandi tidak cocok!');
       return;
@@ -353,16 +344,7 @@ export default function PublicApply() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold ml-1">Tanggal Mulai</label>
-                    <input type="date" name="start_date" value={formData.start_date} min={today} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold ml-1">Tanggal Selesai</label>
-                    <input type="date" name="end_date" value={formData.end_date} min={formData.start_date} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
-                  </div>
-                </div>
+
               </div>
             </section>
 

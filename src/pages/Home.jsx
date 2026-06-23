@@ -252,10 +252,7 @@ export default function Home() {
                       ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
                       : `${new Date(program.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(program.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span>Kuota: {program.quota} Peserta</span>
-                  </div>
+
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4 text-primary" />
                     <span>Lokasi: Tangerang & Semarang</span>

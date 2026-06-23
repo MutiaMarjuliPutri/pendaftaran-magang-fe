@@ -16,7 +16,6 @@ const schema = z.object({
   program_name: z.string().min(1, "Nama program wajib diisi"),
   department_id: z.string().min(1, "Divisi wajib dipilih"),
   description: z.string().optional(),
-  quota: z.coerce.number().min(0, "Kuota tidak boleh negatif"),
   requirements: z.string().optional(),
   skills_needed: z.string().optional(),
   registration_start: z.string().optional(),
@@ -51,7 +50,6 @@ export default function InternshipPrograms() {
     resolver: zodResolver(schema),
     defaultValues: {
       status: "draft",
-      quota: 0,
     },
   });
 
@@ -62,7 +60,6 @@ export default function InternshipPrograms() {
       program_name: "",
       department_id: "",
       description: "",
-      quota: 0,
       requirements: "",
       skills_needed: "",
       status: "draft",
@@ -78,7 +75,6 @@ export default function InternshipPrograms() {
       program_name: item.program_name,
       department_id: item.department_id,
       description: item.description || "",
-      quota: item.quota,
       requirements: item.requirements || "",
       skills_needed: item.skills_needed || "",
       registration_start: item.registration_start?.split("T")[0],
@@ -111,35 +107,17 @@ export default function InternshipPrograms() {
       )
     },
     {
-      header: "Kuota & Pendaftar",
+      header: "Pendaftar",
       cell: (row) => {
-        const remaining = (row.quota || 0) - (row.total_accepted || 0);
-        const percent = (row.quota || 0) > 0 ? Math.round(((row.total_accepted || 0) / row.quota) * 100) : 0;
-        
         return (
           <div className="space-y-1.5 min-w-[140px]">
-            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-              <span className="text-muted-foreground">Terisi: {row.total_accepted || 0}/{row.quota || 0}</span>
-              <span className={remaining <= 0 ? "text-rose-500 font-black" : "text-emerald-500 font-black"}>
-                Sisa: {remaining}
-              </span>
-            </div>
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-              <div 
-                className={cn(
-                  "h-full transition-all duration-500",
-                  percent >= 100 ? "bg-rose-500" : percent >= 80 ? "bg-amber-500" : "bg-emerald-500"
-                )}
-                style={{ width: `${Math.min(percent, 100)}%` }}
-              ></div>
-            </div>
-            <div className="flex items-center justify-between text-[10px]">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Users size={10} /> {row.total_registrations || 0} Calon
+            <div className="flex items-center justify-between text-xs font-medium">
+              <div className="flex items-center gap-1 text-muted-foreground" title="Total Pendaftar">
+                <Users size={14} /> {row.total_registrations || 0} Calon
               </div>
-              {percent >= 100 && (
-                <span className="text-[9px] font-black text-rose-500 uppercase">Penuh</span>
-              )}
+              <div className="flex items-center gap-1 text-emerald-600" title="Total Diterima">
+                <UserCheck size={14} /> {row.total_accepted || 0} Diterima
+              </div>
             </div>
           </div>
         );
@@ -229,14 +207,6 @@ export default function InternshipPrograms() {
                   placeholder="Contoh: 11"
                 />
                 {errors.batch && <p className="text-xs text-destructive">{errors.batch.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Kuota</label>
-                <input
-                  type="number"
-                  {...register("quota")}
-                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-                />
               </div>
             </div>
 
