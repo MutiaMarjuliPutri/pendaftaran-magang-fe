@@ -250,40 +250,74 @@ export default function HomeModern() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {programs.map((program) => (
-              <div key={program.id} className="group bg-white border border-gray-100 p-8 rounded-[2rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-200 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primaryColor} bg-red-900/5`}>
-                      {program.program_code?.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
-                      {program.program_code?.includes('BACK') && <Database className="w-5 h-5" />}
-                      {program.program_code?.includes('UIUX') && <PenTool className="w-5 h-5" />}
-                      {program.program_code?.includes('BA') && <Briefcase className="w-5 h-5" />}
-                      {program.program_code?.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
+            {programs.map((program) => {
+              // Mapping program_code ke file gambar di /public
+              const getProgramImage = (code) => {
+                if (!code) return null;
+                if (code.includes('FRONT')) return '/FE.jpg';
+                if (code.includes('BACK')) return '/BE.webp';
+                if (code.includes('UIUX')) return '/DESAIN.jpg';
+                if (code.includes('BA')) return '/BA.jpg';
+                if (code.includes('QA')) return '/QA.webp';
+                return null;
+              };
+              const programImage = getProgramImage(program.program_code);
+
+              return (
+                <div key={program.id} className="group bg-white border border-gray-100 rounded-[2rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-gray-200 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
+                  {/* Gambar Program */}
+                  {programImage && (
+                    <div className="relative h-44 w-full overflow-hidden rounded-t-[2rem]">
+                      <img
+                        src={programImage}
+                        alt={program.program_name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Overlay gradient bawah */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      {/* Badge program code di atas gambar */}
+                      <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-widest text-white bg-red-900/80 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow">
+                        {program.program_code}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-red-900/60 bg-red-50 px-2 py-1 rounded-md">{program.program_code}</span>
+                  )}
+
+                  <div className="p-8 flex flex-col flex-1">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primaryColor} bg-red-900/5`}>
+                          {program.program_code?.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
+                          {program.program_code?.includes('BACK') && <Database className="w-5 h-5" />}
+                          {program.program_code?.includes('UIUX') && <PenTool className="w-5 h-5" />}
+                          {program.program_code?.includes('BA') && <Briefcase className="w-5 h-5" />}
+                          {program.program_code?.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
+                        </div>
+                        {!programImage && (
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-red-900/60 bg-red-50 px-2 py-1 rounded-md">{program.program_code}</span>
+                        )}
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{program.program_name}</h4>
+                      <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
+                        {program.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 mb-8 mt-2">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <MapPin className="w-4 h-4 text-red-900" />
+                        <span>Tangerang &amp; Semarang</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto flex gap-3">
+                      <button onClick={() => openModal(program)} className={`flex-1 py-2.5 rounded-xl border border-red-900 text-red-900 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center`}>
+                        Lihat Detail
+                      </button>
+                    </div>
                   </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{program.program_name}</h4>
-                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
-                    {program.description}
-                  </p>
                 </div>
-
-                <div className="space-y-3 mb-8 mt-2">
-
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <MapPin className="w-4 h-4 text-red-900" />
-                    <span>Tangerang & Semarang</span>
-                  </div>
-                </div>
-
-                <div className="mt-auto flex gap-3">
-                  <button onClick={() => openModal(program)} className={`flex-1 py-2.5 rounded-xl border border-red-900 text-red-900 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center`}>
-                    Lihat Detail
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
