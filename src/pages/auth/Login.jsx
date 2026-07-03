@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'react-hot-toast'
-import { Loader2, AlertCircle, User, Lock } from 'lucide-react'
+import { Loader2, AlertCircle, User, Lock, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/api/axios'
 
@@ -17,6 +17,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [loginError, setLoginError] = useState(null) // null | 'username' | 'password' | 'general'
   const [errorMessage, setErrorMessage] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
 
@@ -59,7 +60,7 @@ export default function Login() {
   }
 
   const inputClass = (field) => {
-    const base = 'flex h-11 w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all duration-200 pl-10'
+    const base = 'flex h-11 w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all duration-200 pl-10 pr-10'
     if (loginError === field) return `${base} border-red-400 bg-red-50/50 focus:ring-2 focus:ring-red-300 animate-shake`
     return `${base} border-input bg-background focus-visible:ring-2 focus-visible:ring-ring`
   }
@@ -133,12 +134,19 @@ export default function Login() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className={inputClass('password')}
                 placeholder="••••••••"
                 {...register('password')}
                 onChange={() => { if (loginError === 'password') setLoginError(null) }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors duration-200"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
             {errors.password && (
               <p className="text-xs text-red-500 font-medium flex items-center gap-1">

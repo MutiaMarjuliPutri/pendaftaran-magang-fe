@@ -126,7 +126,7 @@ export default function HomeModern() {
               Login
             </button>
             <button
-              onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/register')}
               className={`px-5 py-2.5 rounded-full ${bgPrimary} text-white text-sm font-medium ${hoverBgPrimary} transition-all flex items-center gap-2 shadow-lg shadow-red-900/20`}
             >
               Daftar Magang <ArrowRight className="w-4 h-4" />
@@ -152,7 +152,7 @@ export default function HomeModern() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
                   </span>
-                  Pendaftaran {currentPeriod?.period_name} Dibuka
+                  Pendaftaran Magang {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
                 </div>
               ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
                 <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">
@@ -281,9 +281,6 @@ export default function HomeModern() {
                   <button onClick={() => openModal(program)} className={`flex-1 py-2.5 rounded-xl border border-red-900 text-red-900 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center`}>
                     Lihat Detail
                   </button>
-                  <button disabled={periodStatus !== 'open'} onClick={() => navigate('/register', { state: { programCode: program.program_code } })} className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center transition-colors ${periodStatus === 'open' ? 'bg-red-900 text-white hover:bg-red-950' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                    Daftar
-                  </button>
                 </div>
               </div>
             ))}
@@ -401,7 +398,7 @@ export default function HomeModern() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
-                    onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => navigate('/register')}
                     className={`px-6 py-3.5 rounded-xl ${bgPrimary} text-white font-bold text-sm ${hoverBgPrimary} transition-all shadow-md shadow-red-900/20 flex items-center justify-center gap-2`}
                   >
                     Daftar Magang <ArrowRight className="w-4 h-4" />

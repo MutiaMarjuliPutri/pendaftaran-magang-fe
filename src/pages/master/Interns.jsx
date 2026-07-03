@@ -7,7 +7,7 @@ import DeleteConfirm from "@/components/shared/DeleteConfirm";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import api from "@/api/axios";
-import { Edit2, Trash2, Mail, Phone, GraduationCap, Star } from "lucide-react";
+import { Edit2, Trash2, Mail, Phone, GraduationCap, Star, FileSpreadsheet, FileDown, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,7 +25,7 @@ const schema = z.object({
   major: z.string().min(1, "Jurusan wajib diisi"),
   semester: z.coerce.number().min(1).max(14).optional(),
   status: z.enum(["active", "inactive", "graduated", "dropped"]).default("active"),
-  batch: z.coerce.number().min(1).max(9).optional(),
+  batch: z.coerce.number().min(1).max(50).optional(),
 });
 
 export default function Interns() {
@@ -54,10 +54,56 @@ export default function Interns() {
     },
   });
 
+  const [activeBatch, setActiveBatch] = useState("");
+  const [activeYear, setActiveYear] = useState("");
   const [activeStatus, setActiveStatus] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  // Build the base API URL from the axios instance baseURL
+  const apiBaseUrl = api.defaults.baseURL?.replace(/\/$/, "") || "";
+
+  const handleExport = async (format, batchOverride, yearOverride) => {
+    const batch = batchOverride !== undefined ? batchOverride : activeBatch;
+    const year = yearOverride !== undefined ? yearOverride : activeYear;
+    
+    const paramsArray = [];
+    if (batch) paramsArray.push(`batch=${batch}`);
+    if (year) paramsArray.push(`year=${year}`);
+    const params = paramsArray.length > 0 ? `?${paramsArray.join('&')}` : "";
+    
+    const url = `${apiBaseUrl}/master/interns/export/${format}${params}`;
+    const token = localStorage.getItem("token");
+    setExportOpen(false);
+
+    const loadingToast = toast.loading(
+      `Mempersiapkan ${format === "excel" ? "Excel" : "PDF"}${year ? ` Tahun ${year}` : ""}${batch ? ` Batch ${batch}` : ""}...`
+    );
+    try {
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error(`Gagal mengunduh (${response.status})`);
+      const blob = await response.blob();
+      const a = document.createElement("a");
+      const ext = format === "excel" ? "xlsx" : "pdf";
+      a.href = URL.createObjectURL(blob);
+      const nameParts = ["peserta-magang"];
+      if (year) nameParts.push(`tahun${year}`);
+      if (batch) nameParts.push(`batch${batch}`);
+      if (!year && !batch) nameParts.push("semua");
+      a.download = `${nameParts.join('-')}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      toast.success("File berhasil diunduh!", { id: loadingToast });
+    } catch (err) {
+      toast.error(err.message || "Gagal mengunduh file", { id: loadingToast });
+    }
+  };
 
   const {
     register,
@@ -237,16 +283,73 @@ export default function Interns() {
         onPageChange={(page) => setParams((prev) => ({ ...prev, page }))}
         groupByKey="batch"
       >
-        <div className="flex items-center gap-2 mb-4 mt-2">
-          <select 
-            onChange={(e) => setParams(prev => ({ ...prev, batch: e.target.value, page: 1 }))}
+        <div className="flex flex-wrap items-center gap-3 mb-4 mt-2">
+          {/* Filter Tahun */}
+          <select
+            onChange={(e) => {
+              setActiveYear(e.target.value);
+              setParams(prev => ({ ...prev, year: e.target.value, page: 1 }));
+            }}
+            value={activeYear}
+            className="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20 h-10 bg-card"
+          >
+            <option value="">Semua Tahun</option>
+            {[2024, 2025, 2026, 2027].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          {/* Filter Batch */}
+          <select
+            onChange={(e) => {
+              setActiveBatch(e.target.value);
+              setParams(prev => ({ ...prev, batch: e.target.value, page: 1 }));
+            }}
+            value={activeBatch}
             className="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20 h-10 bg-card"
           >
             <option value="">Semua Batch</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(b => (
+            {Array.from({ length: 10 }, (_, i) => i + 1).map(b => (
               <option key={b} value={b}>Batch {b}</option>
             ))}
           </select>
+
+          {/* Tombol Export */}
+          <div className="relative ml-auto">
+            <button
+              type="button"
+              onClick={() => setExportOpen(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              <FileDown size={14} />
+              Export
+              <ChevronDown size={13} className={`transition-transform duration-200 ${exportOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 bg-white dark:bg-card border border-border rounded-xl shadow-xl py-1.5 min-w-[180px] animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
+                  {activeYear ? `Thn ${activeYear} ` : ""}{activeBatch ? `Batch ${activeBatch}` : (!activeYear && "Semua Data")}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleExport("excel")}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-medium transition-colors"
+                >
+                  <FileSpreadsheet size={15} />
+                  Excel (.xlsx)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport("pdf")}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-medium transition-colors"
+                >
+                  <FileDown size={15} />
+                  PDF (.pdf)
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </DataTable>
 
@@ -314,7 +417,7 @@ export default function Interns() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Batch</label>
                 <select {...register("batch")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((b) => (
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((b) => (
                     <option key={b} value={b}>Batch {b}</option>
                   ))}
                 </select>

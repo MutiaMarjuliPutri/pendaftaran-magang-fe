@@ -15,6 +15,7 @@ import * as z from "zod";
 const schema = z.object({
   period_code: z.string().min(1, "Kode periode wajib diisi"),
   period_name: z.string().min(1, "Nama periode wajib diisi"),
+  batch: z.coerce.number().min(1, "Batch minimal 1").max(50).optional(),
   year: z.coerce.number().min(2000, "Tahun tidak valid"),
   semester: z.enum(["ganjil", "genap"]),
   registration_start: z.string().min(1, "Tanggal mulai pendaftaran wajib diisi"),
@@ -34,6 +35,7 @@ export default function InternshipPeriods() {
     mutationFn: ({ id, is_active }) => api.patch(`/master/internship-periods/${id}/active-status`, { is_active }),
     onSuccess: () => {
       queryClient.invalidateQueries(["internship-periods"]);
+      queryClient.invalidateQueries(["internship-programs"]);
       toast.success("Status periode berhasil diperbarui");
     },
     onError: (err) => {
@@ -64,6 +66,7 @@ export default function InternshipPeriods() {
     reset({
       period_code: "",
       period_name: "",
+      batch: 1,
       year: new Date().getFullYear(),
       semester: "ganjil",
       registration_start: "",
@@ -82,6 +85,7 @@ export default function InternshipPeriods() {
     reset({
       period_code: item.period_code,
       period_name: item.period_name,
+      batch: item.batch || 1,
       year: item.year,
       semester: item.semester,
       registration_start: item.registration_start?.split("T")[0],
@@ -97,15 +101,31 @@ export default function InternshipPeriods() {
 
   const onSubmit = (formData) => {
     if (selectedItem) {
-      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { onSuccess: () => setIsModalOpen(false) });
+      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { 
+        onSuccess: () => {
+          setIsModalOpen(false);
+          queryClient.invalidateQueries(["internship-programs"]);
+        }
+      });
     } else {
-      createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
+      createMutation.mutate(formData, { 
+        onSuccess: () => {
+          setIsModalOpen(false);
+          queryClient.invalidateQueries(["internship-programs"]);
+        }
+      });
     }
   };
 
   const columns = [
     { header: "Kode", accessorKey: "period_code", className: "font-mono text-xs" },
     { header: "Nama Periode", accessorKey: "period_name", className: "font-semibold" },
+    {
+      header: "Batch",
+      accessorKey: "batch",
+      className: "text-center",
+      cell: (row) => <span className="font-bold">Batch {row.batch || "-"}</span>
+    },
     {
       header: "Rentang Program",
       cell: (row) => (
@@ -245,14 +265,25 @@ export default function InternshipPeriods() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Periode</label>
-              <input
-                {...register("period_name")}
-                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-                placeholder="Contoh: Magang Batch 1 2024"
-              />
-              {errors.period_name && <p className="text-xs text-destructive">{errors.period_name.message}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nama Periode</label>
+                <input
+                  {...register("period_name")}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  placeholder="Contoh: Magang Batch 1 2024"
+                />
+                {errors.period_name && <p className="text-xs text-destructive">{errors.period_name.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batch</label>
+                <select {...register("batch")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((b) => (
+                    <option key={b} value={b}>Batch {b}</option>
+                  ))}
+                </select>
+                {errors.batch && <p className="text-xs text-destructive">{errors.batch.message}</p>}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

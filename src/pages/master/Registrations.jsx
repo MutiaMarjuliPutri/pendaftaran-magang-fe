@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar, Award } from "lucide-react";
+import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar, Award, ArrowRight, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import BulkAssessmentModal from "@/components/scores/BulkAssessmentModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -165,6 +165,32 @@ export default function Registrations() {
     setParams((prev) => ({ ...prev, status_id: statusId, page: 1 }));
   };
 
+  // Alur status berurutan: pending → documents_review → interview1 → interview2 → rejected/accepted
+  const STATUS_FLOW = [
+    'pending',
+    'documents_review',
+    'interview1',
+    'interview2',
+    'rejected',
+    'accepted',
+  ];
+
+  const getNextStatuses = (currentStatusName) => {
+    if (!statuses) return [];
+    switch (currentStatusName) {
+      case 'pending':
+        return statuses.filter(s => s.name === 'documents_review');
+      case 'documents_review':
+        return statuses.filter(s => s.name === 'interview1');
+      case 'interview1':
+        return statuses.filter(s => s.name === 'interview2');
+      case 'interview2':
+        return statuses.filter(s => s.name === 'rejected' || s.name === 'accepted');
+      default:
+        return [];
+    }
+  };
+
   const columns = [
     {
       header: "Nomor & Peserta",
@@ -245,44 +271,76 @@ export default function Registrations() {
     {
       header: "Aksi",
       className: "text-right",
-      cell: (row) => (
-        <div className="flex justify-end items-center gap-2">
-          <select
-            value={row.status_id}
-            onChange={(e) => {
-              const val = e.target.value;
-              const sObj = statuses?.find(s => s.id === val);
-              if (sObj?.name === "interview1" || sObj?.name === "interview2") {
-                setQuickInterviewModal({ id: row.id, status_id: val, status_name: sObj.name });
+      cell: (row) => {
+        const currentStatus = row.status?.name;
+        const nextStatuses = getNextStatuses(currentStatus);
+        const isTerminal = currentStatus === 'accepted' || currentStatus === 'rejected';
+        return (
+          <div className="flex justify-end items-center gap-2 flex-wrap">
+            {/* Tombol status berikutnya berurutan */}
+            {!isTerminal && nextStatuses.length > 0 && nextStatuses.map((ns) => {
+              const isAccept = ns.name === 'accepted';
+              const isReject = ns.name === 'rejected';
+              const isInterview = ns.name === 'interview1' || ns.name === 'interview2';
+              let btnClass = "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ";
+              let label = ns.name.replace(/_/g, ' ');
+              if (isAccept) {
+                btnClass += "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20";
+                label = 'Terima';
+              } else if (isReject) {
+                btnClass += "bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-500/20";
+                label = 'Tolak';
+              } else if (ns.name === 'documents_review') {
+                btnClass += "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border border-purple-500/20";
+                label = 'Review Dok';
               } else {
-                handleQuickStatusUpdate(row.id, val);
+                btnClass += "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20";
               }
-            }}
-            className="h-8 bg-muted border-none text-[10px] font-bold uppercase rounded-lg px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all hover:bg-muted/80"
-          >
-            {statuses?.map((s) => (
-              <option key={s.id} value={s.id} className="text-black bg-white">
-                {s.name.replace("_", " ")}
-              </option>
-            ))}
-          </select>
-          <button onClick={() => setSelectedDetailItem(row)} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors" title="Lihat Detail">
-            <Eye size={16} />
-          </button>
-          <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
-            <Edit2 size={16} />
-          </button>
-          <button
-            onClick={() => {
-              setSelectedItem(row);
-              setIsDeleteOpen(true);
-            }}
-            className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
+              return (
+                <button
+                  key={ns.id}
+                  onClick={() => {
+                    if (isInterview) {
+                      setQuickInterviewModal({ id: row.id, status_id: ns.id, status_name: ns.name });
+                    } else {
+                      handleQuickStatusUpdate(row.id, ns.id);
+                    }
+                  }}
+                  className={btnClass}
+                  title={`Ubah ke: ${ns.name.replace(/_/g, ' ')}`}
+                >
+                  {isAccept && <CheckCircle2 size={12} />}
+                  {isReject && <XCircle size={12} />}
+                  {!isAccept && !isReject && <ChevronRight size={12} />}
+                  {label}
+                </button>
+              );
+            })}
+            {isTerminal && (
+              <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
+                currentStatus === 'accepted' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+              }`}>
+                {currentStatus === 'accepted' ? '✓ Diterima' : '✗ Ditolak'}
+              </span>
+            )}
+            <button onClick={() => setSelectedDetailItem(row)} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors" title="Lihat Detail">
+              <Eye size={16} />
+            </button>
+            <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors" title="Edit">
+              <Edit2 size={16} />
+            </button>
+            <button
+              onClick={() => {
+                setSelectedItem(row);
+                setIsDeleteOpen(true);
+              }}
+              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -364,13 +422,28 @@ export default function Registrations() {
               <label className="text-sm font-medium">Status Pendaftaran <span className="text-red-500">*</span></label>
               <select {...register("status_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
                 <option value="">Pilih Status</option>
-                {statuses?.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
+                {(() => {
+                  if (!selectedItem) {
+                    // Tambah baru: hanya pending sebagai awal
+                    return statuses?.filter(s => s.name === 'pending').map(s => (
+                      <option key={s.id} value={s.id}>{s.name.replace(/_/g, ' ')}</option>
+                    ));
+                  }
+                  // Edit: tampilkan status saat ini + status berikutnya yang valid
+                  const currentName = selectedItem?.status?.name;
+                  const allowedNext = getNextStatuses(currentName).map(s => s.name);
+                  const allowedNames = new Set([currentName, ...allowedNext]);
+                  return statuses?.filter(s => allowedNames.has(s.name)).map(s => (
+                    <option key={s.id} value={s.id}>{s.name.replace(/_/g, ' ')}</option>
+                  ));
+                })()}
               </select>
               {errors.status_id && <p className="text-xs text-destructive">{errors.status_id.message}</p>}
+              {selectedItem && (
+                <p className="text-[10px] text-muted-foreground">
+                  Status saat ini: <span className="font-bold">{selectedItem.status?.name?.replace(/_/g, ' ')}</span>
+                </p>
+              )}
             </div>
             {isInterviewStatus && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">

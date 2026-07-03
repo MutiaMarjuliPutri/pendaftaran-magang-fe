@@ -139,7 +139,7 @@ export default function Home() {
               Login
             </button>
             <button
-              onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/register')}
               className="px-5 py-2 rounded-full bg-red-900 text-white text-sm font-semibold hover:bg-red-950 transition-all shadow-lg shadow-red-900/20 active:scale-95"
             >
               Lamar Sekarang
@@ -166,12 +166,7 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Pendaftaran Magang {currentPeriod?.period_name || 'Periode'} Dibuka
-              {currentPeriod?.registration_start && currentPeriod?.registration_end && (
-                <span className="ml-1 opacity-80 font-normal">
-                  ({new Date(currentPeriod.registration_start).toLocaleDateString('id-ID')} - {new Date(currentPeriod.registration_end).toLocaleDateString('id-ID')})
-                </span>
-              )}
+              Pendaftaran Magang {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
             </div>
           ) : periodStatus === 'closed' ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-sm font-semibold mb-8">
@@ -262,19 +257,9 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => openModal(program)}
-                    className="w-1/2 py-3 rounded-xl border-2 border-red-900 text-red-900 font-bold hover:bg-red-50 transition-all"
+                    className="w-full py-3 rounded-xl border-2 border-red-900 text-red-900 font-bold hover:bg-red-50 transition-all"
                   >
                     Lihat Detail
-                  </button>
-                  <button
-                    disabled={periodStatus !== 'open'}
-                    onClick={() => navigate('/register', { state: { programCode: program.program_code } })}
-                    className={`w-1/2 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${periodStatus === 'open'
-                      ? "bg-red-900 text-white hover:bg-red-950"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      }`}
-                  >
-                    {periodStatus === 'open' ? 'Daftar' : 'Ditutup'} {periodStatus === 'open' && <ArrowRight className="w-4 h-4" />}
                   </button>
                 </div>
               </div>

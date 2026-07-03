@@ -104,6 +104,29 @@ const periodOptions = [
   { key: 'all', label: 'Seluruh Waktu', helper: 'seluruh waktu' },
 ]
 
+const renderTextWithLinks = (text) => {
+  if (!text) return null
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return parts.map((part, idx) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={idx}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 hover:underline break-all font-semibold inline-flex items-center gap-0.5"
+        >
+          {part}
+          <ArrowUpRight size={12} className="inline shrink-0" />
+        </a>
+      )
+    }
+    return part
+  })
+}
+
 export default function Dashboard() {
   const { user } = useAuthStore()
   const rawRole = typeof user?.role === 'object' ? user.role?.name : user?.role
@@ -330,9 +353,16 @@ export default function Dashboard() {
                               {
                                 step: 1,
                                 label: 'Sesi Wawancara',
-                                desc: formattedInterviewDate
-                                  ? `Wawancara Anda dijadwalkan pada: ${formattedInterviewDate}`
-                                  : 'Siapkan diri Anda untuk diskusi teknis dengan mentor.',
+                                desc: (
+                                  <>
+                                    {formattedInterviewDate ? `Jadwal: ${formattedInterviewDate}. ` : 'Siapkan diri Anda untuk diskusi teknis dengan mentor. '}
+                                    {user.registration?.notes && (
+                                      <>
+                                        Link/Info: {renderTextWithLinks(user.registration.notes)}
+                                      </>
+                                    )}
+                                  </>
+                                ),
                                 active: true
                               },
                               { step: 2, label: 'Pengumuman Akhir', desc: 'Hasil seleksi wawancara akan diinfokan segera.', active: false },
@@ -382,10 +412,28 @@ export default function Dashboard() {
                           <FileCheck size={120} />
                         </div>
                         <p className="text-base leading-relaxed text-foreground/80 italic relative z-10">
-                          "{user.registration?.status === 'pending' ? 'Harap bersabar. Tim kami sedang meninjau ribuan berkas yang masuk untuk memilih talenta terbaik seperti Anda.' :
-                            user.registration?.status === 'accepted' ? 'Selamat! Anda terpilih. Mohon siapkan dokumen identitas asli Anda untuk proses administrasi selanjutnya.' :
-                              user.registration?.status === 'rejected' ? 'Terima kasih atas minat Anda. Jangan berkecil hati, asah terus kemampuan Anda dan coba lagi di gelombang berikutnya.' :
-                                'Cek email Anda secara berkala untuk jadwal interview atau informasi tambahan lainnya.'}"
+                          "
+                          {(() => {
+                            const status = user.registration?.status
+                            if (status === 'pending') {
+                              return 'Harap bersabar. Tim kami sedang meninjau ribuan berkas yang masuk untuk memilih talenta terbaik seperti Anda.'
+                            }
+                            if (status === 'accepted') {
+                              return 'Selamat! Anda terpilih. Mohon siapkan dokumen identitas asli Anda untuk proses administrasi selanjutnya.'
+                            }
+                            if (status === 'rejected') {
+                              return 'Terima kasih atas minat Anda. Jangan berkecil hati, asah terus kemampuan Anda dan coba lagi di gelombang berikutnya.'
+                            }
+                            if (status?.startsWith('interview')) {
+                              return user.registration?.notes ? (
+                                <>Catatan/Link Wawancara: {renderTextWithLinks(user.registration.notes)}</>
+                              ) : (
+                                'Jadwal wawancara telah ditentukan. Cek WhatsApp Anda atau tunggu informasi detail link/lokasi dari tim kami.'
+                              )
+                            }
+                            return 'Cek WhatsApp/Email Anda secara berkala untuk informasi tambahan lainnya.'
+                          })()}
+                          "
                         </p>
 
                         {user.registration?.status === 'accepted' && (

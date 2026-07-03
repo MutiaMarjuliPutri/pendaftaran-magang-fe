@@ -3,6 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import { Edit2, Trash2, UserCheck, Calendar, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,13 +56,33 @@ export default function MentorInterns() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
   });
 
   const selectedInternId = watch("intern_id");
+  const selectedMentorId = watch("user_id");
   const selectedIntern = useMemo(() => interns?.find((intern) => intern.id === selectedInternId), [interns, selectedInternId]);
+
+  const internOptions = useMemo(() => {
+    if (!interns) return [];
+    return interns.map(i => ({
+      value: i.id,
+      label: i.name,
+      subLabel: i.registration?.program?.program_name || i.major || i.university || "-"
+    }));
+  }, [interns]);
+
+  const mentorOptions = useMemo(() => {
+    if (!mentors) return [];
+    return mentors.map(m => ({
+      value: m.id,
+      label: m.full_name || m.fullname,
+      subLabel: m.email || "-"
+    }));
+  }, [mentors]);
 
   const onAdd = () => {
     setSelectedItem(null);
@@ -170,17 +191,16 @@ export default function MentorInterns() {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Peserta Magang</label>
-            <select {...register("intern_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value="">Pilih Peserta</option>
-              {interns?.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name} ({i.registration?.program?.program_name || i.major || i.university || "-"})
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={internOptions}
+              value={selectedInternId}
+              onChange={(val) => setValue("intern_id", val, { shouldValidate: true })}
+              placeholder="Pilih atau cari peserta..."
+              error={errors.intern_id}
+            />
             {errors.intern_id && <p className="text-xs text-destructive">{errors.intern_id.message}</p>}
             {selectedIntern?.registration?.position?.name && (
-              <p className="text-xs text-muted-foreground">Penempatan: {selectedIntern.registration.position.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">Penempatan: <span className="font-semibold">{selectedIntern.registration.position.name}</span></p>
             )}
           </div>
 
@@ -199,14 +219,13 @@ export default function MentorInterns() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Mentor</label>
-            <select {...register("user_id")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
-              <option value="">Pilih Mentor</option>
-              {mentors?.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name || m.fullname}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={mentorOptions}
+              value={selectedMentorId}
+              onChange={(val) => setValue("user_id", val, { shouldValidate: true })}
+              placeholder="Pilih atau cari mentor..."
+              error={errors.user_id}
+            />
             {errors.user_id && <p className="text-xs text-destructive">{errors.user_id.message}</p>}
           </div>
 
