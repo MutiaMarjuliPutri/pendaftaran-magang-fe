@@ -22,6 +22,7 @@ const schema = z.object({
   registration_end: z.string().min(1, "Tanggal selesai pendaftaran wajib diisi"),
   program_start: z.string().min(1, "Tanggal mulai program wajib diisi"),
   program_end: z.string().min(1, "Tanggal selesai program wajib diisi"),
+  announcement_date: z.string().optional().nullable(),
   quota_total: z.coerce.number().min(0, "Kuota tidak boleh negatif"),
   is_active: z.boolean().default(true),
   registration_status: z.enum(["open", "closed", "announced"]).default("open"),
@@ -73,6 +74,7 @@ export default function InternshipPeriods() {
       registration_end: "",
       program_start: "",
       program_end: "",
+      announcement_date: "",
       quota_total: 0,
       is_active: true,
       registration_status: "open",
@@ -92,6 +94,7 @@ export default function InternshipPeriods() {
       registration_end: item.registration_end?.split("T")[0],
       program_start: item.program_start?.split("T")[0],
       program_end: item.program_end?.split("T")[0],
+      announcement_date: item.announcement_date ? item.announcement_date.split("T")[0] : "",
       quota_total: item.quota_total,
       is_active: item.is_active,
       registration_status: item.registration_status || "open",
@@ -358,6 +361,15 @@ export default function InternshipPeriods() {
                 </div>
               </div>
               {(errors.program_start || errors.program_end) && <p className="text-xs text-destructive">Jadwal program wajib diisi</p>}
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-4 mt-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600">Jadwal Pengumuman</h4>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-amber-700">Tanggal Pengumuman (Opsional)</label>
+                <input type="date" {...register("announcement_date")} className="flex h-10 w-full rounded-lg border border-amber-500/20 bg-background px-3 text-sm" />
+                <p className="text-[10px] text-amber-600/70 mt-1">Jika diisi, status pendaftaran di halaman utama akan otomatis berubah menjadi "Tutup" setelah masa pendaftaran lewat, dan menampilkan teks jadwal pengumuman.</p>
+              </div>
             </div>
           </div>
         </div>

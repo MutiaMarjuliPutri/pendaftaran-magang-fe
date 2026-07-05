@@ -129,7 +129,7 @@ export default function HomeModern() {
               onClick={() => navigate('/register')}
               className={`px-5 py-2.5 rounded-full ${bgPrimary} text-white text-sm font-medium ${hoverBgPrimary} transition-all flex items-center gap-2 shadow-lg shadow-red-900/20`}
             >
-              Daftar Magang <ArrowRight className="w-4 h-4" />
+              {periodStatus === 'open' ? 'Daftar Magang' : 'Status Pendaftaran'} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function HomeModern() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
                   </span>
-                  Pendaftaran Magang {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
+                  Pendaftaran  {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
                 </div>
               ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
                 <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">
@@ -162,6 +162,11 @@ export default function HomeModern() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6">
                   <span className="w-2 h-2 rounded-full bg-gray-400"></span>
                   Pendaftaran Ditutup
+                  {currentPeriod?.announcement_date && (
+                    <span className="ml-1 opacity-90 font-bold">
+                      - Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -435,7 +440,7 @@ export default function HomeModern() {
                     onClick={() => navigate('/register')}
                     className={`px-6 py-3.5 rounded-xl ${bgPrimary} text-white font-bold text-sm ${hoverBgPrimary} transition-all shadow-md shadow-red-900/20 flex items-center justify-center gap-2`}
                   >
-                    Daftar Magang <ArrowRight className="w-4 h-4" />
+                    {periodStatus === 'open' ? 'Daftar Magang' : 'Cek Status Pendaftaran'} <ArrowRight className="w-4 h-4" />
                   </button>
                   <a
                     href="https://rapiertechnology.co.id"

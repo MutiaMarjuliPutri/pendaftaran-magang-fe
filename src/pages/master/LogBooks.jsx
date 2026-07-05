@@ -25,7 +25,7 @@ const schema = z.object({
     description: z.string(),
   })).optional(),
   description: z.string().optional(),
-  documentation_url: z.string().optional(),
+  documentation_url: z.string().min(1, "Dokumentasi kegiatan wajib diupload"),
 }).refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
   message: "Tanggal selesai harus setelah tanggal mulai",
   path: ["end_date"],
@@ -665,7 +665,7 @@ export default function LogBooks() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">File Dokumentasi (PDF)</label>
+            <label className="text-sm font-medium">File Dokumentasi (PDF) <span className="text-red-500">*</span></label>
             <div className="flex items-center gap-3 mt-1">
               <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg cursor-pointer hover:bg-purple-700">
                 <Upload size={16} />
@@ -684,6 +684,7 @@ export default function LogBooks() {
               )}
             </div>
             <input type="hidden" {...register("documentation_url")} />
+            {errors.documentation_url && <p className="text-xs text-red-500 mt-1">{errors.documentation_url.message}</p>}
             <p className="text-xs text-gray-400 mt-1">Format PDF, maksimal 5MB</p>
           </div>
         </div>

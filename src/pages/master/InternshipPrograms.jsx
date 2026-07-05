@@ -18,12 +18,36 @@ const schema = z.object({
   description: z.string().optional(),
   requirements: z.string().optional(),
   skills_needed: z.string().optional(),
-  registration_start: z.string().optional(),
-  registration_end: z.string().optional(),
-  program_start_date: z.string().optional(),
-  program_end_date: z.string().optional(),
+  registration_start: z.string().min(1, "Tanggal mulai pendaftaran wajib diisi"),
+  registration_end: z.string().min(1, "Tanggal selesai pendaftaran wajib diisi"),
+  program_start_date: z.string().min(1, "Tanggal mulai program wajib diisi"),
+  program_end_date: z.string().min(1, "Tanggal selesai program wajib diisi"),
   status: z.enum(["draft", "open", "closed", "ongoing", "finished"]).default("draft"),
   batch: z.coerce.number().min(1, "Batch minimal 1").max(99).optional(),
+}).refine((data) => {
+  if (!data.registration_start || !data.registration_end) return true;
+  const regStart = new Date(data.registration_start);
+  const regEnd = new Date(data.registration_end);
+  return regEnd > regStart;
+}, {
+  message: "Tanggal selesai pendaftaran harus setelah tanggal mulai",
+  path: ["registration_end"],
+}).refine((data) => {
+  if (!data.registration_end || !data.program_start_date) return true;
+  const regEnd = new Date(data.registration_end);
+  const progStart = new Date(data.program_start_date);
+  return progStart > regEnd;
+}, {
+  message: "Tanggal mulai program harus setelah tanggal selesai pendaftaran",
+  path: ["program_start_date"],
+}).refine((data) => {
+  if (!data.program_start_date || !data.program_end_date) return true;
+  const progStart = new Date(data.program_start_date);
+  const progEnd = new Date(data.program_end_date);
+  return progEnd > progStart;
+}, {
+  message: "Tanggal selesai program harus setelah tanggal mulai program",
+  path: ["program_end_date"],
 });
 
 export default function InternshipPrograms() {
@@ -270,23 +294,27 @@ export default function InternshipPrograms() {
             </div>
 
             <div className="space-y-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-primary/70">Jadwal (Opsional)</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-primary/70">Jadwal Program</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Pendaftaran Mulai</label>
                   <input type="date" {...register("registration_start")} className="flex h-9 w-full rounded-lg border border-input bg-background px-2 text-xs" />
+                  {errors.registration_start && <p className="text-[10px] text-destructive font-medium">{errors.registration_start.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Pendaftaran Selesai</label>
                   <input type="date" {...register("registration_end")} className="flex h-9 w-full rounded-lg border border-input bg-background px-2 text-xs" />
+                  {errors.registration_end && <p className="text-[10px] text-destructive font-medium">{errors.registration_end.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Program Mulai</label>
                   <input type="date" {...register("program_start_date")} className="flex h-9 w-full rounded-lg border border-input bg-background px-2 text-xs" />
+                  {errors.program_start_date && <p className="text-[10px] text-destructive font-medium">{errors.program_start_date.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Program Selesai</label>
                   <input type="date" {...register("program_end_date")} className="flex h-9 w-full rounded-lg border border-input bg-background px-2 text-xs" />
+                  {errors.program_end_date && <p className="text-[10px] text-destructive font-medium">{errors.program_end_date.message}</p>}
                 </div>
               </div>
             </div>

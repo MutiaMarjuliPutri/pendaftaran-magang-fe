@@ -38,21 +38,28 @@ export default function Login() {
       toast.success('Berhasil masuk! Selamat datang 👋')
       navigate('/dashboard')
     } catch (error) {
-      const msg = error.response?.data?.message || 'Gagal masuk.'
+      const msg = error.response?.data?.message || 'Gagal masuk. Terjadi kesalahan pada server.'
       const statusCode = error.response?.status
 
-      if (statusCode === 404 || msg.toLowerCase().includes('tidak ditemukan') || msg.toLowerCase().includes('akun')) {
+      if (statusCode === 404 || msg.toLowerCase().includes('tidak terdaftar') || msg.toLowerCase().includes('tidak ditemukan') || msg.toLowerCase().includes('username salah') || msg.toLowerCase().includes('email salah')) {
         setLoginError('username')
-        setErrorMessage('Username atau email tidak terdaftar. Periksa kembali.')
-      } else if (statusCode === 400 && (msg.toLowerCase().includes('sandi') || msg.toLowerCase().includes('password'))) {
+        const finalMsg = 'Username atau email tidak terdaftar. Periksa kembali.'
+        setErrorMessage(finalMsg)
+        toast.error(finalMsg)
+      } else if ((statusCode === 400 && (msg.toLowerCase().includes('sandi') || msg.toLowerCase().includes('password'))) || msg.toLowerCase().includes('password salah') || msg.toLowerCase().includes('sandi salah')) {
         setLoginError('password')
-        setErrorMessage('Kata sandi salah. Periksa kembali kata sandi Anda.')
+        const finalMsg = 'Kata sandi salah. Periksa kembali kata sandi Anda.'
+        setErrorMessage(finalMsg)
+        toast.error(finalMsg)
       } else if (msg.toLowerCase().includes('aktif')) {
         setLoginError('general')
-        setErrorMessage('Akun Anda belum aktif. Hubungi admin.')
+        const finalMsg = 'Akun Anda belum aktif. Hubungi admin.'
+        setErrorMessage(finalMsg)
+        toast.error(finalMsg)
       } else {
         setLoginError('general')
         setErrorMessage(msg)
+        toast.error(msg)
       }
     } finally {
       setIsLoading(false)

@@ -166,15 +166,23 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Pendaftaran Magang {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
+              Pendaftaran Magang {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl {currentPeriod?.registration_start && currentPeriod?.registration_end
+                ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                : '1 Juli - 10 Juli 2026'}
             </div>
           ) : periodStatus === 'closed' ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-sm font-semibold mb-8">
               🔴 Pendaftaran Magang {currentPeriod?.period_name || 'Periode'} Ditutup
-              {currentPeriod?.registration_start && currentPeriod?.registration_end && (
-                <span className="ml-1 opacity-80 font-normal text-xs">
-                  (Berakhir pada {new Date(currentPeriod.registration_end).toLocaleDateString('id-ID')})
+              {currentPeriod?.announcement_date ? (
+                <span className="ml-1 opacity-90 font-bold text-xs">
+                  - Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
+              ) : (
+                currentPeriod?.registration_end && (
+                  <span className="ml-1 opacity-80 font-normal text-xs">
+                    (Berakhir pada {new Date(currentPeriod.registration_end).toLocaleDateString('id-ID')})
+                  </span>
+                )
               )}
             </div>
           ) : periodStatus === 'announced' ? (

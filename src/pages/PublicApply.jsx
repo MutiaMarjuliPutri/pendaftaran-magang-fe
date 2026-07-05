@@ -12,6 +12,8 @@ export default function PublicApply() {
   const [programs, setPrograms] = useState([]);
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [periodStatus, setPeriodStatus] = useState(null);
+  const [currentPeriod, setCurrentPeriod] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [cvFile, setCvFile] = useState(null);
   const [cvFileName, setCvFileName] = useState('');
@@ -54,12 +56,16 @@ export default function PublicApply() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [programsRes, positionsRes] = await Promise.all([
+        const [programsRes, positionsRes, periodRes] = await Promise.all([
           api.get('/public/programs'),
-          api.get('/public/placements')
+          api.get('/public/placements'),
+          api.get('/public/current-period').catch(() => null)
         ]);
         setPrograms(programsRes.data.data || []);
         setPositions(positionsRes.data.data || []);
+        const period = periodRes?.data?.data;
+        setPeriodStatus(period?.registration_status || 'closed');
+        setCurrentPeriod(period);
       } catch (error) {
         toast.error('Gagal mengambil data pendukung.');
       } finally {
@@ -140,6 +146,36 @@ export default function PublicApply() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-red-900 animate-spin" />
           <p className="text-red-900 font-medium">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (periodStatus !== 'open') {
+    return (
+      <div className="min-h-screen bg-accent/20 py-12 px-4 relative overflow-hidden flex items-center justify-center">
+        <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-red-900/5 blur-[120px] rounded-full -mr-32 -mt-32"></div>
+        <div className="max-w-md w-full relative z-10 text-center">
+          <div className="bg-card rounded-[32px] border border-border shadow-2xl p-8 md:p-10 space-y-6">
+            <div className="w-20 h-20 mx-auto rounded-full bg-red-50 flex items-center justify-center text-red-900">
+              <GraduationCap size={40} />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 font-sans">Pendaftaran Ditutup</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Mohon maaf, pendaftaran untuk periode magang saat ini telah ditutup atau belum dibuka.
+              {currentPeriod?.announcement_date && (
+                <span className="block mt-2 font-semibold text-red-900">
+                  Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              )}
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-3.5 bg-red-900 text-white rounded-xl font-bold hover:bg-red-950 transition-all shadow-lg shadow-red-900/10"
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
         </div>
       </div>
     );
