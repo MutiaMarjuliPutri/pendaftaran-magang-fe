@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils";
 
 const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8001";
 
-const schema = z.object({
+// Skema untuk Simpan Draft: dokumentasi boleh kosong
+const schemaDraft = z.object({
   title: z.string().min(1, "Judul kegiatan wajib diisi"),
   start_date: z.string().min(1, "Tanggal mulai wajib diisi"),
   end_date: z.string().min(1, "Tanggal selesai wajib diisi"),
@@ -25,7 +26,24 @@ const schema = z.object({
     description: z.string(),
   })).optional(),
   description: z.string().optional(),
-  documentation_url: z.string().min(1, "Dokumentasi kegiatan wajib diupload"),
+  documentation_url: z.string().optional(),
+}).refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
+  message: "Tanggal selesai harus setelah tanggal mulai",
+  path: ["end_date"],
+});
+
+// Skema untuk Kirim ke Mentor: dokumentasi wajib
+const schemaSubmit = z.object({
+  title: z.string().min(1, "Judul kegiatan wajib diisi"),
+  start_date: z.string().min(1, "Tanggal mulai wajib diisi"),
+  end_date: z.string().min(1, "Tanggal selesai wajib diisi"),
+  activities: z.array(z.object({
+    day: z.string(),
+    date: z.string(),
+    description: z.string(),
+  })).optional(),
+  description: z.string().optional(),
+  documentation_url: z.string().min(1, "Dokumentasi wajib diupload sebelum mengirim ke mentor"),
 }).refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
   message: "Tanggal selesai harus setelah tanggal mulai",
   path: ["end_date"],
@@ -80,6 +98,9 @@ export default function LogBooks() {
   const [feedbackValidation, setFeedbackValidation] = useState("waiting");
   const [uploading, setUploading] = useState(false);
   const [activities, setActivities] = useState([]);
+  // Mode submit: 'draft' atau 'send' — menentukan skema validasi yang dipakai
+  // Gunakan ref agar resolver selalu baca nilai terbaru
+  const submitModeRef = useRef("draft");
 
   const {
     register,
@@ -89,7 +110,11 @@ export default function LogBooks() {
     watch,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(schema),
+    // Resolver dinamis: membaca ref agar selalu mendapat mode terbaru
+    resolver: (values, context, options) => {
+      const activeSchema = submitModeRef.current === "send" ? schemaSubmit : schemaDraft;
+      return zodResolver(activeSchema)(values, context, options);
+    },
     defaultValues: {
       title: "",
       start_date: "",
@@ -276,13 +301,13 @@ export default function LogBooks() {
   // Helper function untuk mendapatkan status label
   const getValidationStatus = (validation) => {
     if (validation === "draft") {
-      return { label: "Draft", className: "bg-slate-100 text-slate-700 border-slate-200" };
+      return { label: "Belum Dikirim", className: "bg-slate-100 text-slate-600 border-slate-200" };
     } else if (validation === "approved" || validation === true || validation === "1") {
       return { label: "Disetujui", className: "bg-green-100 text-green-700 border-green-200" };
     } else if (validation === "rejected" || validation === false) {
       return { label: "Ditolak", className: "bg-red-100 text-red-700 border-red-200" };
     } else {
-      return { label: "Menunggu", className: "bg-yellow-100 text-yellow-700 border-yellow-200" };
+      return { label: "Menunggu Validasi", className: "bg-yellow-100 text-yellow-700 border-yellow-200" };
     }
   };
 
@@ -355,8 +380,8 @@ export default function LogBooks() {
           )}>
             {status.label === "Disetujui" && <CheckCircle size={10} />}
             {status.label === "Ditolak" && <XCircle size={10} />}
-            {status.label === "Menunggu" && <Clock size={10} />}
-            {status.label === "Draft" && <Edit2 size={10} />}
+            {status.label === "Menunggu Validasi" && <Clock size={10} />}
+            {status.label === "Belum Dikirim" && <Edit2 size={10} />}
             {status.label}
           </span>
         );
@@ -558,7 +583,7 @@ export default function LogBooks() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={selectedItem ? "Edit Log Aktivitas" : "Tambah Log Aktivitas Mingguan"}
-        onSubmit={handleSubmit((data) => handleCustomSubmit(data, "waiting"))}
+        onSubmit={handleSubmit((data) => handleCustomSubmit(data, submitModeRef.current === "send" ? "waiting" : "draft"))}
         isLoading={createMutation.isLoading || updateMutation.isLoading}
         maxWidth="max-w-3xl"
         customFooter={
@@ -570,18 +595,26 @@ export default function LogBooks() {
             >
               Batal
             </button>
+            {/* Simpan Draft: dokumentasi TIDAK wajib */}
             <button
               type="button"
-              onClick={handleSubmit((data) => handleCustomSubmit(data, "draft"))}
+              onClick={() => {
+                submitModeRef.current = "draft";
+                handleSubmit((data) => handleCustomSubmit(data, "draft"))();
+              }}
               disabled={createMutation.isLoading || updateMutation.isLoading}
               className="px-6 py-2 rounded-xl bg-slate-200 text-slate-800 font-bold shadow-sm hover:bg-slate-300 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {(createMutation.isLoading || updateMutation.isLoading) && <Loader2 size={16} className="animate-spin" />}
               Simpan Draft
             </button>
+            {/* Kirim ke Mentor: dokumentasi WAJIB */}
             <button
               type="button"
-              onClick={handleSubmit((data) => handleCustomSubmit(data, "waiting"))}
+              onClick={() => {
+                submitModeRef.current = "send";
+                handleSubmit((data) => handleCustomSubmit(data, "waiting"))();
+              }}
               disabled={createMutation.isLoading || updateMutation.isLoading}
               className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50"
             >
@@ -665,7 +698,11 @@ export default function LogBooks() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">File Dokumentasi (PDF) <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium">
+              File Dokumentasi (PDF)
+              {/* Keterangan statis agar tidak berubah-ubah saat render */}
+              <span className="ml-1 text-xs text-amber-600 font-normal">(opsional untuk draft — wajib saat kirim ke mentor)</span>
+            </label>
             <div className="flex items-center gap-3 mt-1">
               <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg cursor-pointer hover:bg-purple-700">
                 <Upload size={16} />

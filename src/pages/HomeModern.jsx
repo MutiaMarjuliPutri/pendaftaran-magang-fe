@@ -152,7 +152,9 @@ export default function HomeModern() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
                   </span>
-                  Pendaftaran  {currentPeriod?.period_name || 'Batch 1'} Dibuka tgl 1 Juli-10 Juli 2026
+                  Pendaftaran {currentPeriod?.period_name || 'Batch 1'} Dibuka {currentPeriod?.registration_start && currentPeriod?.registration_end
+                    ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                    : 'tgl 1 Juli-10 Juli 2026'}
                 </div>
               ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
                 <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">

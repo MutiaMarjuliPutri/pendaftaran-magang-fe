@@ -201,7 +201,10 @@ export default function Reports() {
               row.status === 'revision' ? "bg-amber-50 text-amber-600 border-amber-200" :
               "bg-blue-50 text-blue-600 border-blue-200"
             )}>
-              {row.status?.toUpperCase() || "SUBMITTED"}
+              {row.status === 'approved' ? 'Disetujui'
+                : row.status === 'revision' ? 'Perlu Revisi'
+                : row.status === 'reviewed' ? 'Sedang Direview'
+                : 'Dikirim'}
             </span>
           )}
         </div>
