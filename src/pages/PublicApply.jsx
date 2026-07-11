@@ -514,9 +514,9 @@ export default function PublicApply() {
               <button
                 type="submit"
                 disabled={uploading}
-                className="w-full md:w-auto px-16 h-16 bg-red-900 text-white rounded-[20px] font-extrabold shadow-2xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-xl"
+                className="w-full md:w-auto px-8 md:px-16 h-14 md:h-16 bg-red-900 text-white rounded-[20px] font-extrabold shadow-2xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-base md:text-xl"
               >
-                {uploading ? <Loader2 className="animate-spin" /> : <Send size={24} />}
+                {uploading ? <Loader2 className="animate-spin" /> : <Send size={20} className="md:w-6 md:h-6" />}
                 {uploading ? 'Sedang Memproses...' : 'Kirim Lamaran Sekarang'}
               </button>
               <p className="text-sm text-muted-foreground">

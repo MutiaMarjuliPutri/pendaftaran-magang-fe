@@ -54,28 +54,28 @@ export default function DataTable({
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-          {description && <p className="text-muted-foreground">{description}</p>}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl lg:text-2xl font-bold tracking-tight truncate">{title}</h2>
+          {description && <p className="text-muted-foreground text-sm mt-0.5">{description}</p>}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative group flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               placeholder="Cari..."
               onChange={(e) => handleSearch(e.target.value)}
-              className="h-10 pl-10 pr-4 w-64 bg-card border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/5 focus:border-primary/20 transition-all"
+              className="h-10 pl-10 pr-4 w-full sm:w-52 lg:w-64 bg-card border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/5 focus:border-primary/20 transition-all"
             />
           </div>
           {onAdd && (
             <button
               onClick={onAdd}
-              className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary/90 transition-all active:scale-95"
+              className="h-10 px-3 lg:px-4 inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary/90 transition-all active:scale-95 shrink-0 text-sm"
             >
-              <Plus size={18} />
-              Tambah
+              <Plus size={16} />
+              <span className="hidden sm:inline">Tambah</span>
             </button>
           )}
         </div>
@@ -84,12 +84,12 @@ export default function DataTable({
       {children}
 
       <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto -mx-0">
+          <table className="w-full text-sm text-left min-w-[500px]">
             <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
               <tr>
                 {columns.map((col, i) => (
-                  <th key={i} className={cn("px-6 py-4", col.className)}>
+                  <th key={i} className={cn("px-3 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm whitespace-nowrap", col.className)}>
                     {col.header}
                   </th>
                 ))}
@@ -153,7 +153,7 @@ export default function DataTable({
                       {!isCollapsed && (
                         <tr className="hover:bg-muted/30 transition-colors group">
                           {columns.map((col, colIndex) => (
-                            <td key={colIndex} className={cn("px-6 py-4", col.className)}>
+                            <td key={colIndex} className={cn("px-3 lg:px-6 py-3 lg:py-4", col.className)}>
                               {col.cell ? col.cell(row) : row[col.accessorKey]}
                             </td>
                           ))}
@@ -168,45 +168,45 @@ export default function DataTable({
         </div>
 
         {pagination && (
-          <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/20">
+          <div className="px-4 lg:px-6 py-3 lg:py-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/20">
             <p className="text-xs text-muted-foreground">
               Menampilkan <span className="font-bold text-foreground">{data.length}</span> dari <span className="font-bold text-foreground">{pagination.total}</span> data
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 disabled={pagination.page <= 1}
                 onClick={() => onPageChange?.(1)}
-                className="p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
+                className="p-1.5 lg:p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
               >
-                <ChevronsLeft size={16} />
+                <ChevronsLeft size={14} />
               </button>
               <button
                 disabled={pagination.page <= 1}
                 onClick={() => onPageChange?.(pagination.page - 1)}
-                className="p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
+                className="p-1.5 lg:p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={14} />
               </button>
-              <div className="flex items-center gap-1 mx-2">
-                <span className="text-xs font-medium">Halaman</span>
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
+              <div className="flex items-center gap-1 mx-1">
+                <span className="text-xs font-medium hidden sm:inline">Halaman</span>
+                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
                   {pagination.page}
                 </span>
-                <span className="text-xs font-medium text-muted-foreground">dari {Math.ceil(pagination.total / pagination.perPage)}</span>
+                <span className="text-xs font-medium text-muted-foreground">/ {Math.ceil(pagination.total / pagination.perPage)}</span>
               </div>
               <button
                 disabled={pagination.page >= Math.ceil(pagination.total / pagination.perPage)}
                 onClick={() => onPageChange?.(pagination.page + 1)}
-                className="p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
+                className="p-1.5 lg:p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={14} />
               </button>
               <button
                 disabled={pagination.page >= Math.ceil(pagination.total / pagination.perPage)}
                 onClick={() => onPageChange?.(Math.ceil(pagination.total / pagination.perPage))}
-                className="p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
+                className="p-1.5 lg:p-2 rounded-lg hover:bg-background border border-transparent hover:border-border disabled:opacity-30 transition-all"
               >
-                <ChevronsRight size={16} />
+                <ChevronsRight size={14} />
               </button>
             </div>
           </div>

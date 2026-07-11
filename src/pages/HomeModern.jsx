@@ -147,28 +147,32 @@ export default function HomeModern() {
                   Memuat status...
                 </div>
               ) : periodStatus === 'open' ? (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 text-red-900 text-[11px] font-semibold tracking-wide mb-6">
-                  <span className="relative flex h-2 w-2">
+                <div className="flex w-full sm:w-fit items-start gap-2.5 px-4 py-2.5 rounded-2xl bg-red-50 border border-red-100 text-red-900 text-[11px] sm:text-xs font-semibold tracking-wide mb-6">
+                  <span className="relative flex h-2.5 w-2.5 mt-[3px] shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-900"></span>
                   </span>
-                  Pendaftaran {currentPeriod?.period_name || 'Batch 1'} Dibuka {currentPeriod?.registration_start && currentPeriod?.registration_end
-                    ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
-                    : 'tgl 1 Juli-10 Juli 2026'}
+                  <span className="whitespace-normal break-words leading-relaxed text-left flex-1">
+                    Pendaftaran {currentPeriod?.period_name || 'Batch 1'} Dibuka {currentPeriod?.registration_start && currentPeriod?.registration_end
+                      ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                      : 'tgl 1 Juli-10 Juli 2026'}
+                  </span>
                 </div>
               ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
                 <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">
                   🎉 Pengumuman Peserta Diterima
                 </button>
               ) : (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6">
-                  <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                  Pendaftaran Ditutup
-                  {currentPeriod?.announcement_date && (
-                    <span className="ml-1 opacity-90 font-bold">
-                      - Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </span>
-                  )}
+                <div className="flex w-full sm:w-fit items-start gap-2.5 px-4 py-2.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-600 text-[11px] sm:text-xs font-semibold tracking-wide mb-6">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gray-400 mt-[3px] shrink-0"></span>
+                  <span className="whitespace-normal break-words leading-relaxed text-left flex-1">
+                    Pendaftaran Ditutup
+                    {currentPeriod?.announcement_date && (
+                      <span className="block sm:inline sm:ml-1 opacity-90 font-bold mt-1 sm:mt-0">
+                        - Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    )}
+                  </span>
                 </div>
               )}
 

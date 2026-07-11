@@ -257,8 +257,8 @@ export default function ApplyInternship() {
               </div>
             </section>
 
-            <button type="submit" disabled={uploading} className="w-full h-14 bg-red-900 text-white rounded-2xl font-bold shadow-xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-lg">
-              {uploading ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+            <button type="submit" disabled={uploading} className="w-full h-12 md:h-14 bg-red-900 text-white rounded-2xl font-bold shadow-xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-base md:text-lg">
+              {uploading ? <Loader2 className="animate-spin" /> : <Send size={18} className="md:w-5 md:h-5" />}
               {uploading ? 'Sedang memproses...' : 'Kirim Lamaran Sekarang'}
             </button>
           </form>

@@ -43,7 +43,7 @@ export default function Certificate() {
   const internName = report?.intern?.name || "Fadila Islami Nisa";
 
   return (
-    <div className="min-h-screen bg-gray-200 py-10 px-4 print:p-0 print:bg-white flex flex-col items-center justify-center font-sans">
+    <div className="min-h-screen bg-gray-200 py-6 px-4 print:p-0 print:bg-white flex flex-col items-center justify-center font-sans">
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
@@ -62,23 +62,30 @@ export default function Certificate() {
         `}
       </style>
 
-      {/* Controls - Fixed at top with high z-index to ensure clickability */}
-      <div className="w-full max-w-[1122px] flex justify-between items-center mb-6 print:hidden relative z-[100]">
+      {/* Controls */}
+      <div className="w-full max-w-[1122px] flex justify-between items-center mb-4 print:hidden relative z-[100]">
         <button 
           onClick={handleClose} 
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-800 rounded-lg shadow-md hover:bg-gray-100 transition-all font-bold cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-white text-gray-800 rounded-lg shadow-md hover:bg-gray-100 transition-all font-bold cursor-pointer text-sm"
         >
-          <ArrowLeft size={18} /> Tutup Tab
+          <ArrowLeft size={16} /> Tutup
         </button>
         <button 
           onClick={handlePrint}
-          className="flex items-center gap-2 px-6 py-2.5 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-all font-bold cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-all font-bold cursor-pointer text-sm"
         >
-          <Printer size={18} /> Unduh (Print ke PDF)
+          <Printer size={16} /> Cetak PDF
         </button>
       </div>
 
-      {/* Certificate Container - Landscape A4 Proportion (1122x793 px) */}
+      {/* Mobile notice */}
+      <div className="w-full max-w-[1122px] mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs font-medium print:hidden lg:hidden text-center">
+        💡 Untuk hasil terbaik, putar HP ke mode <strong>landscape</strong> atau buka di komputer.
+      </div>
+
+      {/* Certificate scroll wrapper untuk mobile */}
+      <div className="w-full overflow-x-auto print:overflow-visible">
+
       <div className="w-[1122px] h-[793px] bg-white relative shadow-2xl overflow-hidden print:shadow-none print:w-[297mm] print:h-[210mm] print:m-0 font-montserrat flex">
         
         {/* Inner Thin Border */}
@@ -241,6 +248,7 @@ export default function Certificate() {
           </div>
         </div>
 
+      </div>
       </div>
     </div>
   );

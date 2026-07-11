@@ -738,23 +738,7 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-bold">
-                          <span className="text-muted-foreground uppercase">Kapasitas Terisi</span>
-                          <span className={((program.quota || 0) - (program.total_accepted || 0)) <= 0 ? "text-rose-500" : "text-primary"}>
-                            {program.total_accepted || 0} / {program.quota || 0}
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              "h-full transition-all duration-1000",
-                              (program.total_accepted / program.quota) >= 1 ? "bg-rose-500" : "bg-primary"
-                            )}
-                            style={{ width: `${Math.min(((program.total_accepted || 0) / (program.quota || 1)) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
+
                     </div>
                   ))}
                   {!topPrograms.length && (
