@@ -460,14 +460,14 @@ export default function HomeModern() {
               </div>
 
               <div className="space-y-4">
-                <a href="mailto:hello@rapiertechnology.co.id" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-2xl hover:border-red-900/30 hover:shadow-md hover:shadow-red-900/5 transition-all group">
+                <a href="mailto:hrdrapier@rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-2xl hover:border-red-900/30 hover:shadow-md hover:shadow-red-900/5 transition-all group">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-red-900/5 flex items-center justify-center text-red-900">
                       <Mail className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-0.5 uppercase">Email</div>
-                      <div className={`font-bold text-gray-900 group-hover:${primaryColor} transition-colors`}>contact@rapier.co.id</div>
+                      <div className={`font-bold text-gray-900 group-hover:${primaryColor} transition-colors`}>hrdrapier@rapiertechnology.co.id</div>
                     </div>
                   </div>
                   <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-red-900 group-hover:translate-x-1 transition-all" />
@@ -544,7 +544,7 @@ export default function HomeModern() {
             <div>
               <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">KONTAK</h4>
               <ul className="space-y-3">
-                <li><a href="mailto:contact@rapier.co.id" className={`text-sm text-gray-600 hover:${primaryColor}`}>contact@rapier.co.id</a></li>
+                <li><a href="mailto:hrdrapier@rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>hrdrapier@rapiertechnology.co.id</a></li>
                 <li><span className="text-sm text-gray-600">+62 812 9777 0484</span></li>
                 <li><a href="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Tangerang, Indonesia</a></li>
                 <li><a href="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Semarang, Indonesia</a></li>

@@ -3,7 +3,7 @@ import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
 import DeleteConfirm from "@/components/shared/DeleteConfirm";
-import { Edit2, Trash2, FileText, ExternalLink, User, Upload, X, Eye, Calendar, Award, ArrowRight, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
+import { Edit2, Trash2, FileText, User, Upload, X, Eye, Calendar, Award, CheckCircle2, XCircle } from "lucide-react";
 import BulkAssessmentModal from "@/components/scores/BulkAssessmentModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +39,7 @@ export default function Registrations() {
   const [cvFileUrl, setCvFileUrl] = useState("");
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkModalRegId, setBulkModalRegId] = useState("");
+  const [confirmModal, setConfirmModal] = useState(null); // { type: 'accepted'|'rejected', registrationId, statusId, name }
 
   const {
     register,
@@ -165,31 +166,56 @@ export default function Registrations() {
     setParams((prev) => ({ ...prev, status_id: statusId, page: 1 }));
   };
 
-  // Alur status berurutan: pending → documents_review → interview1 → interview2 → rejected/accepted
-  const STATUS_FLOW = [
-    'pending',
-    'documents_review',
-    'interview1',
-    'interview2',
-    'rejected',
-    'accepted',
+  // Status yang bisa dipilih admin
+  const ADMIN_STATUSES = [
+    { name: 'documents_review', label: 'Document Review' },
+    { name: 'interview1', label: 'Wawancara 1' },
+    { name: 'interview2', label: 'Wawancara 2' },
+    { name: 'accepted', label: 'Accept' },
+    { name: 'rejected', label: 'Rejected' },
   ];
 
-  const getNextStatuses = (currentStatusName) => {
-    if (!statuses) return [];
-    switch (currentStatusName) {
-      case 'pending':
-        return statuses.filter(s => s.name === 'documents_review');
-      case 'documents_review':
-        return statuses.filter(s => s.name === 'interview1');
-      case 'interview1':
-        return statuses.filter(s => s.name === 'interview2');
-      case 'interview2':
-        return statuses.filter(s => s.name === 'rejected' || s.name === 'accepted');
-      default:
-        return [];
-    }
-  };
+  // Dropdown komponen untuk ganti status
+  function StatusDropdown({ row }) {
+    const currentStatus = row.status?.name;
+
+    const handleChange = (e) => {
+      const selectedName = e.target.value;
+      if (!selectedName || selectedName === currentStatus) return;
+      const targetStatus = statuses?.find(s => s.name === selectedName);
+      if (!targetStatus) return;
+      const isInterview = selectedName === 'interview1' || selectedName === 'interview2';
+      if (isInterview) {
+        setQuickInterviewModal({ id: row.id, status_id: targetStatus.id, status_name: targetStatus.name });
+        e.target.value = currentStatus;
+      } else if (selectedName === 'accepted' || selectedName === 'rejected') {
+        setConfirmModal({
+          type: selectedName,
+          registrationId: row.id,
+          statusId: targetStatus.id,
+          name: row.intern?.name || row.registration_number,
+        });
+        e.target.value = currentStatus;
+      } else {
+        handleQuickStatusUpdate(row.id, targetStatus.id);
+      }
+    };
+
+    return (
+      <select
+        value={currentStatus || ''}
+        onChange={handleChange}
+        className="h-8 rounded-lg border border-input bg-background px-2 text-xs outline-none focus:ring-1 focus:ring-primary/30 cursor-pointer"
+      >
+        {currentStatus === 'pending' && (
+          <option value="pending">Pending</option>
+        )}
+        {ADMIN_STATUSES.map((s) => (
+          <option key={s.name} value={s.name}>{s.label}</option>
+        ))}
+      </select>
+    );
+  }
 
   const columns = [
     {
@@ -233,7 +259,7 @@ export default function Registrations() {
         return (
           <div className="flex flex-col gap-1.5 items-start">
             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border ${colorClass}`}>
-              {row.status?.name?.replace("_", " ") || "Pending"}
+              {row.status?.name?.replace(/_/g, " ") || "Pending"}
             </span>
             {row.interview_date && (
               <span className="text-[9px] text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-blue-500/10" title="Jadwal Wawancara">
@@ -255,11 +281,11 @@ export default function Registrations() {
       cell: (row) => (
         <div className="flex gap-2">
           {row.cv_file && (
-            <a 
-              href={`${FILE_URL}${row.cv_file}`} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all" 
+            <a
+              href={`${FILE_URL}${row.cv_file}`}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all"
               title="Lihat CV"
             >
               <FileText size={14} />
@@ -271,76 +297,27 @@ export default function Registrations() {
     {
       header: "Aksi",
       className: "text-right",
-      cell: (row) => {
-        const currentStatus = row.status?.name;
-        const nextStatuses = getNextStatuses(currentStatus);
-        const isTerminal = currentStatus === 'accepted' || currentStatus === 'rejected';
-        return (
-          <div className="flex justify-end items-center gap-2 flex-wrap">
-            {/* Tombol status berikutnya berurutan */}
-            {!isTerminal && nextStatuses.length > 0 && nextStatuses.map((ns) => {
-              const isAccept = ns.name === 'accepted';
-              const isReject = ns.name === 'rejected';
-              const isInterview = ns.name === 'interview1' || ns.name === 'interview2';
-              let btnClass = "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ";
-              let label = ns.name.replace(/_/g, ' ');
-              if (isAccept) {
-                btnClass += "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20";
-                label = 'Terima';
-              } else if (isReject) {
-                btnClass += "bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-500/20";
-                label = 'Tolak';
-              } else if (ns.name === 'documents_review') {
-                btnClass += "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border border-purple-500/20";
-                label = 'Review Dok';
-              } else {
-                btnClass += "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20";
-              }
-              return (
-                <button
-                  key={ns.id}
-                  onClick={() => {
-                    if (isInterview) {
-                      setQuickInterviewModal({ id: row.id, status_id: ns.id, status_name: ns.name });
-                    } else {
-                      handleQuickStatusUpdate(row.id, ns.id);
-                    }
-                  }}
-                  className={btnClass}
-                  title={`Ubah ke: ${ns.name.replace(/_/g, ' ')}`}
-                >
-                  {isAccept && <CheckCircle2 size={12} />}
-                  {isReject && <XCircle size={12} />}
-                  {!isAccept && !isReject && <ChevronRight size={12} />}
-                  {label}
-                </button>
-              );
-            })}
-            {isTerminal && (
-              <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
-                currentStatus === 'accepted' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
-              }`}>
-                {currentStatus === 'accepted' ? '✓ Diterima' : '✗ Ditolak'}
-              </span>
-            )}
-            <button onClick={() => setSelectedDetailItem(row)} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors" title="Lihat Detail">
-              <Eye size={16} />
-            </button>
-            <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors" title="Edit">
-              <Edit2 size={16} />
-            </button>
-            <button
-              onClick={() => {
-                setSelectedItem(row);
-                setIsDeleteOpen(true);
-              }}
-              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        );
-      },
+      cell: (row) => (
+        <div className="flex justify-end items-center gap-2">
+          {/* Dropdown ganti status */}
+          <StatusDropdown row={row} />
+          <button onClick={() => setSelectedDetailItem(row)} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors" title="Lihat Detail">
+            <Eye size={16} />
+          </button>
+          <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors" title="Edit">
+            <Edit2 size={16} />
+          </button>
+          <button
+            onClick={() => {
+              setSelectedItem(row);
+              setIsDeleteOpen(true);
+            }}
+            className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -706,6 +683,7 @@ export default function Registrations() {
         </div>
       )}
 
+
       <BulkAssessmentModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
@@ -714,6 +692,59 @@ export default function Registrations() {
         initialRegistrationId={bulkModalRegId}
         onSuccess={() => {}}
       />
+
+      {/* Modal Konfirmasi Ubah Status */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+          <div className="relative w-full max-w-md bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+            <div className="p-6">
+              <div className="flex gap-4">
+                {/* Ikon */}
+                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
+                  confirmModal.type === 'accepted' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
+                }`}>
+                  {confirmModal.type === 'accepted'
+                    ? <CheckCircle2 size={20} />
+                    : <XCircle size={20} />
+                  }
+                </div>
+                {/* Teks */}
+                <div>
+                  <h3 className="text-base font-bold mb-1">
+                    {confirmModal.type === 'accepted' ? 'Terima Pendaftaran' : 'Tolak Pendaftaran'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Apakah Anda yakin ingin <strong className="text-foreground">{confirmModal.type === 'accepted' ? 'menerima' : 'menolak'}</strong> pendaftaran dari <strong className="text-foreground">{confirmModal.name}</strong>? Tindakan ini akan mengubah status dan mengirimkan notifikasi kepada peserta terkait.
+                  </p>
+                </div>
+              </div>
+              {/* Tombol */}
+              <div className="flex gap-3 mt-6 justify-end">
+                <button
+                  onClick={() => setConfirmModal(null)}
+                  className="px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-muted transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    handleQuickStatusUpdate(confirmModal.registrationId, confirmModal.statusId);
+                    setConfirmModal(null);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-white text-sm font-semibold transition-all active:scale-95 ${
+                    confirmModal.type === 'accepted'
+                      ? 'bg-primary hover:bg-primary/90'
+                      : 'bg-destructive hover:bg-destructive/90'
+                  }`}
+                >
+                  {confirmModal.type === 'accepted' ? 'Ya, Terima' : 'Ya, Tolak'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

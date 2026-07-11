@@ -398,7 +398,7 @@ export default function Home() {
               <div>
                 <h3 className="text-lg font-bold text-primary mb-3">⚠️ Persyaratan Khusus</h3>
                 <ul className="list-disc list-inside space-y-2 text-base text-muted-foreground">
-                  <li>Mahasiswa aktif semester 6 atau lebih</li>
+                  <li>Mahasiswa aktif semester 4 atau lebih</li>
                   <li>Memiliki laptop pribadi</li>
                   <li>Kesiapan untuk belajar secara mandiri</li>
                   <li>Komitmen waktu minimal 3 bulan</li>
@@ -637,8 +637,8 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5" />
-                    <a href="mailto:contact@rapiertechnology.co.id" className="text-muted-foreground hover:text-primary transition-colors">
-                      contact@rapiertechnology.co.id
+                    <a href="mailto:hrdrapier@rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                      hrdrapier@rapiertechnology.co.id
                     </a>
                   </div>
                   <div className="flex items-center gap-3">

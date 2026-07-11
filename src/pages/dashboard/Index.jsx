@@ -453,7 +453,7 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <p className="text-xs font-bold">Butuh Bantuan?</p>
-                            <p className="text-[10px] text-muted-foreground">Hubungi kami di hr@rapiertechnology.co.id</p>
+                            <p className="text-[10px] text-muted-foreground">Hubungi kami di hrdrapier@rapiertechnology.co.id</p>
                           </div>
                         </div>
                       </div>
