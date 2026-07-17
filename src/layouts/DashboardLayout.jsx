@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart } from "lucide-react";
+import { LayoutDashboard, UserCircle, Users, Briefcase, Calendar, ClipboardList, LogOut, ChevronRight, Menu, X, Bell, Search, Building2, CheckCircle2, MapPin, ClipboardCheck, Star, Award, FileBarChart, UserCog } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import api, { FILE_URL } from "@/api/axios";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ const menuItems = [
   { icon: FileBarChart, label: "Laporan & Sertifikat", path: "/master/reports", roles: ["admin", "mentor", "student", "intern"] },
   { icon: FileBarChart, label: "Log Book", path: "/master/log-books", roles: ["mentor", "student", "intern"] },
   { icon: Award, label: "Nilai Saya", path: "/my-scores", roles: ["student", "intern"] },
+  { icon: UserCog, label: "Manajemen User", path: "/master/users", roles: ["admin"] },
 ];
 
 export default function DashboardLayout() {

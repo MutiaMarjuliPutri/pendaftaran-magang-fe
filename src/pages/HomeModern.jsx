@@ -679,7 +679,7 @@ export default function HomeModern() {
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-3">⚠️ Persyaratan Khusus</h3>
                   <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-600">
-                    <li>Mahasiswa aktif semester 6 atau lebih</li>
+                    <li>Mahasiswa aktif semester 4 atau lebih</li>
                     <li>Memiliki laptop pribadi</li>
                     <li>Kesiapan untuk belajar secara mandiri</li>
                     <li>Komitmen waktu minimal 3 bulan</li>

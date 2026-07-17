@@ -20,6 +20,22 @@ const schema = z.object({
   interview_date: z.string().optional().nullable(),
 });
 
+// Fungsi untuk menentukan status berikutnya yang diperbolehkan
+const STATUS_FLOW = {
+  pending: ['documents_review', 'rejected'],
+  documents_review: ['interview1', 'interview2', 'accepted', 'rejected'],
+  interview1: ['interview2', 'accepted', 'documents_review', 'rejected'],
+  interview2: ['accepted', 'documents_review', 'rejected'],
+  accepted: ['rejected'],
+  rejected: ['pending', 'documents_review'],
+};
+
+function getNextStatuses(currentName) {
+  if (!currentName) return [];
+  const nextNames = STATUS_FLOW[currentName] || [];
+  return nextNames.map(name => ({ name }));
+}
+
 export default function Registrations() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/registrations", "registrations");
 
@@ -126,9 +142,9 @@ export default function Registrations() {
       formattedInterviewDate = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
     }
     reset({
-      internship_program_id: item.internship_program_id,
-      status_id: item.status_id,
-      position_id: item.position_id || "",
+      internship_program_id: item.internship_program_id || item.program?.id || "",
+      status_id: item.status_id || item.status?.id || "",
+      position_id: item.position_id || item.position?.id || "",
       duration: item.duration,
       notes: item.notes || "",
       interview_date: formattedInterviewDate,
@@ -141,6 +157,9 @@ export default function Registrations() {
   const onSubmit = (formData) => {
     const submitData = {
       ...formData,
+      internship_program_id: formData.internship_program_id || null,
+      status_id: formData.status_id || null,
+      position_id: formData.position_id || null,
       interview_date: formData.interview_date || null
     };
     const finalData = selectedItem
@@ -406,14 +425,12 @@ export default function Registrations() {
                       <option key={s.id} value={s.id}>{s.name.replace(/_/g, ' ')}</option>
                     ));
                   }
-                  // Edit: tampilkan status saat ini + status berikutnya yang valid
-                  const currentName = selectedItem?.status?.name;
-                  const allowedNext = getNextStatuses(currentName).map(s => s.name);
-                  const allowedNames = new Set([currentName, ...allowedNext]);
-                  return statuses?.filter(s => allowedNames.has(s.name)).map(s => (
+                  // Edit: tampilkan semua status yang tersedia (admin bisa pilih bebas)
+                  return statuses?.map(s => (
                     <option key={s.id} value={s.id}>{s.name.replace(/_/g, ' ')}</option>
                   ));
-                })()}
+                })()
+              }
               </select>
               {errors.status_id && <p className="text-xs text-destructive">{errors.status_id.message}</p>}
               {selectedItem && (
