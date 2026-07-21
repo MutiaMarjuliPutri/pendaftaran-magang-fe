@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/api/axios';
 import { useQuery } from '@tanstack/react-query';
-import { Award, CheckCircle2, ClipboardList, TrendingUp, Star, FileText } from 'lucide-react';
+import { Award, CheckCircle2, ClipboardList, TrendingUp, Star, FileText, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function MyScores() {
@@ -196,9 +196,33 @@ export default function MyScores() {
               <p className="text-xs text-muted-foreground">Rincian skor untuk setiap kriteria penilaian.</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
-            <TrendingUp size={12} />
-            {criteriaScores.length} Kriteria
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  const response = await api.get(`/master/scores/export/${registrationId}`, { responseType: 'blob' });
+                  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', `Nilai_${user?.full_name || 'peserta'}.pdf`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error('Gagal mengunduh PDF:', err);
+                  alert('Gagal mengunduh PDF. Silakan coba lagi.');
+                }
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold text-white bg-red-900 hover:bg-red-950 px-4 py-2 rounded-xl transition-all shadow-md shadow-red-900/20 active:scale-95"
+            >
+              <Download size={14} />
+              Unduh Nilai (PDF)
+            </button>
+            <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+              <TrendingUp size={12} />
+              {criteriaScores.length} Kriteria
+            </div>
           </div>
         </div>
 

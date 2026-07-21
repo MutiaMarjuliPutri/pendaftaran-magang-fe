@@ -18,6 +18,7 @@ import Scores from "@/pages/master/Scores";
 import ReportTypes from "@/pages/master/ReportTypes";
 import Reports from "@/pages/master/Reports";
 import LogBooks from "@/pages/master/LogBooks";
+import Users from "@/pages/master/Users";
 
 import HomeModern from "@/pages/HomeModern";
 import Register from "@/pages/auth/Register";  
@@ -73,6 +74,7 @@ function App() {
         <Route path="/master/report-types" element={<ReportTypes />} />
         <Route path="/master/reports" element={<Reports />} />
         <Route path="/master/log-books" element={<LogBooks />} />
+        <Route path="/master/users" element={<Users />} />
         <Route path="/my-scores" element={<MyScores />} />
       </Route>
 

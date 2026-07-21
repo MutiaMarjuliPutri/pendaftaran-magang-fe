@@ -241,11 +241,17 @@ export default function BulkAssessmentModal({ isOpen, onClose, registrations = [
                       </td>
                       <td className="px-6 py-4">
                         <input 
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={scores[c.id]?.score || 0}
-                          onChange={(e) => handleScoreChange(c.id, e.target.value)}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={scores[c.id]?.score === 0 ? "" : scores[c.id]?.score ?? ""}
+                          placeholder="0"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || /^\d{0,3}$/.test(val)) {
+                              handleScoreChange(c.id, val === "" ? "0" : val);
+                            }
+                          }}
                           className="w-full h-10 px-3 rounded-lg border-2 border-input bg-background focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-center"
                         />
                       </td>

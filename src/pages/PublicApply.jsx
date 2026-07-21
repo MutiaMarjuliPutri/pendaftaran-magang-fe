@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '@/api/axios';
 import { toast } from 'react-hot-toast';
-import { Loader2, GraduationCap, Briefcase, FileText, Send, Building2, ExternalLink, User, Mail, Phone, Lock, ArrowLeft } from 'lucide-react';
+import { Loader2, GraduationCap, Briefcase, FileText, Send, Building2, ExternalLink, User, Mail, Phone, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function PublicApply() {
   const navigate = useNavigate();
@@ -12,10 +12,14 @@ export default function PublicApply() {
   const [programs, setPrograms] = useState([]);
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [periodStatus, setPeriodStatus] = useState(null);
+  const [currentPeriod, setCurrentPeriod] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [cvFile, setCvFile] = useState(null);
   const [cvFileName, setCvFileName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -31,23 +35,37 @@ export default function PublicApply() {
     position_id: '',
     duration: '6',
     start_month: '',
-    end_month: '',
-    start_date: '',
-    end_date: ''
+    end_month: ''
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+  useEffect(() => {
+    if (formData.start_month && formData.duration) {
+      const startIndex = months.indexOf(formData.start_month);
+      const duration = parseInt(formData.duration) || 0;
+      
+      if (startIndex !== -1 && duration > 0) {
+        const endIndex = (startIndex + duration - 1) % 12;
+        setFormData(prev => ({ ...prev, end_month: months[endIndex] }));
+      }
+    }
+  }, [formData.start_month, formData.duration]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [programsRes, positionsRes] = await Promise.all([
+        const [programsRes, positionsRes, periodRes] = await Promise.all([
           api.get('/public/programs'),
-          api.get('/public/placements')
+          api.get('/public/placements'),
+          api.get('/public/current-period').catch(() => null)
         ]);
         setPrograms(programsRes.data.data || []);
         setPositions(positionsRes.data.data || []);
+        const period = periodRes?.data?.data;
+        setPeriodStatus(period?.registration_status || 'closed');
+        setCurrentPeriod(period);
       } catch (error) {
         toast.error('Gagal mengambil data pendukung.');
       } finally {
@@ -92,14 +110,7 @@ export default function PublicApply() {
       toast.error('Harap upload file CV (PDF)');
       return;
     }
-    if (formData.start_date && formData.start_date < today) {
-      toast.error('Tanggal mulai tidak boleh di masa lalu!');
-      return;
-    }
-    if (formData.start_date && formData.end_date && new Date(formData.end_date) < new Date(formData.start_date)) {
-      toast.error('Tanggal selesai tidak boleh sebelum tanggal mulai!');
-      return;
-    }
+
     if (formData.password !== confirmPassword) {
       toast.error('Konfirmasi kata sandi tidak cocok!');
       return;
@@ -135,6 +146,36 @@ export default function PublicApply() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-red-900 animate-spin" />
           <p className="text-red-900 font-medium">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (periodStatus !== 'open') {
+    return (
+      <div className="min-h-screen bg-accent/20 py-12 px-4 relative overflow-hidden flex items-center justify-center">
+        <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-red-900/5 blur-[120px] rounded-full -mr-32 -mt-32"></div>
+        <div className="max-w-md w-full relative z-10 text-center">
+          <div className="bg-card rounded-[32px] border border-border shadow-2xl p-8 md:p-10 space-y-6">
+            <div className="w-20 h-20 mx-auto rounded-full bg-red-50 flex items-center justify-center text-red-900">
+              <GraduationCap size={40} />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 font-sans">Pendaftaran Ditutup</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Mohon maaf, pendaftaran untuk periode magang saat ini telah ditutup atau belum dibuka.
+              {currentPeriod?.announcement_date && (
+                <span className="block mt-2 font-semibold text-red-900">
+                  Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              )}
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-3.5 bg-red-900 text-white rounded-xl font-bold hover:bg-red-950 transition-all shadow-lg shadow-red-900/10"
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -265,7 +306,7 @@ export default function PublicApply() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold ml-1">Semester</label>
-                    <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="14" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="1 - 14" />
+                    <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="10" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" placeholder="" />
                   </div>
                 </div>
               ) : (
@@ -337,32 +378,23 @@ export default function PublicApply() {
                     <label className="text-sm font-semibold ml-1">Dari Bulan</label>
                     <select name="start_month" value={formData.start_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
                       <option value="">Pilih Bulan Mulai</option>
-                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                      {months.map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold ml-1">Sampai Bulan</label>
-                    <select name="end_month" value={formData.end_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
+                    <select name="end_month" value={formData.end_month} onChange={handleChange} required disabled className="w-full h-12 rounded-xl border border-input px-4 bg-muted/50 cursor-not-allowed outline-none transition-all">
                       <option value="">Pilih Bulan Selesai</option>
-                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                      {months.map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold ml-1">Tanggal Mulai</label>
-                    <input type="date" name="start_date" value={formData.start_date} min={today} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold ml-1">Tanggal Selesai</label>
-                    <input type="date" name="end_date" value={formData.end_date} min={formData.start_date} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all" />
-                  </div>
-                </div>
+
               </div>
             </section>
 
@@ -409,15 +441,22 @@ export default function PublicApply() {
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       required
                       minLength={6}
-                      className="w-full h-12 rounded-xl border border-input pl-11 pr-4 focus:ring-2 focus:ring-red-900/20 outline-none transition-all shadow-sm"
+                      className="w-full h-12 rounded-xl border border-input pl-11 pr-10 focus:ring-2 focus:ring-red-900/20 outline-none transition-all shadow-sm"
                       placeholder="Minimal 6 karakter"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors duration-200"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                   {formData.password.length > 0 && formData.password.length < 6 && (
                     <p className="text-xs text-red-500 ml-1 flex items-center gap-1">⚠️ Minimal 6 karakter</p>
@@ -430,11 +469,11 @@ export default function PublicApply() {
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className={`w-full h-12 rounded-xl border pl-11 pr-4 outline-none transition-all shadow-sm focus:ring-2 ${confirmPassword.length === 0
+                      className={`w-full h-12 rounded-xl border pl-11 pr-12 outline-none transition-all shadow-sm focus:ring-2 ${confirmPassword.length === 0
                         ? 'border-input focus:ring-red-900/20'
                         : confirmPassword === formData.password
                           ? 'border-emerald-500 focus:ring-emerald-500/20 bg-emerald-50/30'
@@ -442,12 +481,20 @@ export default function PublicApply() {
                         }`}
                       placeholder="Ulangi kata sandi"
                     />
-                    {/* Match indicator */}
-                    {confirmPassword.length > 0 && (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-base">
-                        {confirmPassword === formData.password ? '✅' : '❌'}
-                      </span>
-                    )}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      {confirmPassword.length > 0 && (
+                        <span className="text-base select-none">
+                          {confirmPassword === formData.password ? '✅' : '❌'}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="text-muted-foreground hover:text-foreground focus:outline-none transition-colors duration-200"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   {confirmPassword.length > 0 && confirmPassword !== formData.password && (
                     <p className="text-xs text-red-500 ml-1 flex items-center gap-1">⚠️ Kata sandi tidak cocok</p>
@@ -467,9 +514,9 @@ export default function PublicApply() {
               <button
                 type="submit"
                 disabled={uploading}
-                className="w-full md:w-auto px-16 h-16 bg-red-900 text-white rounded-[20px] font-extrabold shadow-2xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-xl"
+                className="w-full md:w-auto px-8 md:px-16 h-14 md:h-16 bg-red-900 text-white rounded-[20px] font-extrabold shadow-2xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-base md:text-xl"
               >
-                {uploading ? <Loader2 className="animate-spin" /> : <Send size={24} />}
+                {uploading ? <Loader2 className="animate-spin" /> : <Send size={20} className="md:w-6 md:h-6" />}
                 {uploading ? 'Sedang Memproses...' : 'Kirim Lamaran Sekarang'}
               </button>
               <p className="text-sm text-muted-foreground">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCrud } from "@/hooks/useCrud";
 import DataTable from "@/components/shared/DataTable";
 import FormModal from "@/components/shared/FormModal";
@@ -8,12 +8,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/api/axios";
+import api, { FILE_URL } from "@/api/axios";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
-const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8001";
+
 
 const schema = z.object({
   title: z.string().min(1, "Judul laporan wajib diisi"),
@@ -34,12 +34,12 @@ export default function Reports() {
   const { data, isLoading, pagination, setParams, createMutation, updateMutation, deleteMutation } = useCrud("/master/reports", "reports");
   const { data: reportTypes } = useQuery({ queryKey: ["report-types-all"], queryFn: async () => (await api.get("/master/report-types/all")).data.data });
 
-  // Auto-filter for students
-  useState(() => {
+  // Auto-filter for students: set intern_id param on mount
+  useEffect(() => {
     if (isStudent && user?.registration?.intern_id) {
       setParams(prev => ({ ...prev, intern_id: user.registration.intern_id }));
     }
-  });
+  }, [isStudent, user?.registration?.intern_id]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -201,7 +201,10 @@ export default function Reports() {
               row.status === 'revision' ? "bg-amber-50 text-amber-600 border-amber-200" :
               "bg-blue-50 text-blue-600 border-blue-200"
             )}>
-              {row.status?.toUpperCase() || "SUBMITTED"}
+              {row.status === 'approved' ? 'Disetujui'
+                : row.status === 'revision' ? 'Perlu Revisi'
+                : row.status === 'reviewed' ? 'Sedang Direview'
+                : 'Dikirim'}
             </span>
           )}
         </div>
@@ -227,16 +230,20 @@ export default function Reports() {
       className: "text-right",
       cell: (row) => (
         <div className="flex justify-end items-center gap-2">
-          {row.file_path && (
-            <a 
-              href={`${BASE_URL}${row.file_path}`} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-              title="Unduh Laporan"
-            >
-              <Download size={16} />
-            </a>
+          {row.file_path ? (
+            <>
+              <a 
+                href={`${FILE_URL}${row.file_path}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-bold"
+                title="Lihat / Unduh Laporan"
+              >
+                <Eye size={13} /> Lihat File
+              </a>
+            </>
+          ) : (
+            <span className="text-[10px] text-muted-foreground italic">Belum ada file</span>
           )}
           {!isMentor && (
             <>

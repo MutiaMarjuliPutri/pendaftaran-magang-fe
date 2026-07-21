@@ -92,8 +92,8 @@ export default function HomeModern() {
   return (
     <div className="min-h-screen bg-white font-sans relative overflow-x-hidden text-[#111827]">
       {/* Background Grid Pattern (Art By Code Style adapted to Maroon) */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]" 
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
         style={{ backgroundImage: 'linear-gradient(#7f1d1d 1px, transparent 1px), linear-gradient(90deg, #7f1d1d 1px, transparent 1px)', backgroundSize: '40px 40px' }}
       ></div>
 
@@ -111,7 +111,7 @@ export default function HomeModern() {
               Portal Magang
             </span>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
             <a href="#programs" className="hover:text-gray-900 transition-colors">Program</a>
             <a href="#benefits" className="hover:text-gray-900 transition-colors">Benefit</a>
@@ -126,10 +126,10 @@ export default function HomeModern() {
               Login
             </button>
             <button
-              onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/register')}
               className={`px-5 py-2.5 rounded-full ${bgPrimary} text-white text-sm font-medium ${hoverBgPrimary} transition-all flex items-center gap-2 shadow-lg shadow-red-900/20`}
             >
-              Daftar Magang <ArrowRight className="w-4 h-4" />
+              {periodStatus === 'open' ? 'Daftar Magang' : 'Status Pendaftaran'} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -147,21 +147,32 @@ export default function HomeModern() {
                   Memuat status...
                 </div>
               ) : periodStatus === 'open' ? (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 text-red-900 text-[11px] font-semibold tracking-wide mb-6">
-                  <span className="relative flex h-2 w-2">
+                <div className="flex w-full sm:w-fit items-start gap-2.5 px-4 py-2.5 rounded-2xl bg-red-50 border border-red-100 text-red-900 text-[11px] sm:text-xs font-semibold tracking-wide mb-6">
+                  <span className="relative flex h-2.5 w-2.5 mt-[3px] shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-900 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-900"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-900"></span>
                   </span>
-                  Pendaftaran {currentPeriod?.period_name} Dibuka
+                  <span className="whitespace-normal break-words leading-relaxed text-left flex-1">
+                    Pendaftaran {currentPeriod?.period_name || 'Batch 1'} Dibuka {currentPeriod?.registration_start && currentPeriod?.registration_end
+                      ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                      : 'tgl 1 Juli-10 Juli 2026'}
+                  </span>
                 </div>
               ) : periodStatus === 'announcement' || periodStatus === 'announced' ? (
                 <button onClick={fetchAnnouncement} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-900 text-[11px] font-bold tracking-wide mb-6 hover:bg-red-100 transition-colors cursor-pointer shadow-sm shadow-red-900/10">
                   🎉 Pengumuman Peserta Diterima
                 </button>
               ) : (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-semibold tracking-wide mb-6">
-                  <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                  Pendaftaran Ditutup
+                <div className="flex w-full sm:w-fit items-start gap-2.5 px-4 py-2.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-600 text-[11px] sm:text-xs font-semibold tracking-wide mb-6">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gray-400 mt-[3px] shrink-0"></span>
+                  <span className="whitespace-normal break-words leading-relaxed text-left flex-1">
+                    Pendaftaran Ditutup
+                    {currentPeriod?.announcement_date && (
+                      <span className="block sm:inline sm:ml-1 opacity-90 font-bold mt-1 sm:mt-0">
+                        - Hasil seleksi akan diumumkan pada tanggal {new Date(currentPeriod.announcement_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    )}
+                  </span>
                 </div>
               )}
 
@@ -213,25 +224,23 @@ export default function HomeModern() {
 
             {/* Right Illustration/Image */}
             <div className="hidden lg:flex justify-end relative">
-               <div className="relative w-[95%] max-w-[500px]">
-                 <div className="absolute inset-0 bg-red-100 rounded-[2rem] transform rotate-3 scale-105 opacity-50"></div>
-                 <img 
-                   src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                   alt="Students collaborating" 
-                   className="relative z-10 rounded-[2rem] shadow-xl object-cover object-center aspect-video w-full border border-gray-100"
-                 />
-                 
-                 {/* Decorative Accent */}
-                 <div className="absolute -bottom-6 -left-6 z-20 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-900">
-                       <CheckCircle2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900">100% Real Project</div>
-                      <div className="text-xs text-gray-500">Pengalaman nyata</div>
-                    </div>
-                 </div>
-               </div>
+              <div className="relative w-[95%] max-w-[500px]">
+                <div className="absolute inset-0 bg-red-100 rounded-[2rem] transform rotate-3 scale-105 opacity-50"></div>
+                <img
+                  src="/rapier.jpeg"
+                  alt="Rapier Technology"
+                  className="relative z-10 rounded-[2rem] shadow-xl object-cover object-center aspect-video w-full border border-gray-100"
+                />
+
+                {/* Decorative Accent */}
+                <div className="absolute -bottom-6 -left-6 z-20 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-900">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -243,7 +252,7 @@ export default function HomeModern() {
           <div className="mb-16">
             <h2 className={`text-[11px] font-bold ${primaryColor} tracking-widest uppercase mb-4`}>— APA YANG KAMI KERJAKAN</h2>
             <h3 className="text-4xl md:text-5xl font-bold text-[#111827] tracking-tight max-w-2xl leading-[1.1]">
-              Satu tim. Beragam peran.<br/>
+              Satu tim. Beragam peran.<br />
               Ratusan keputusan engineering yang tepat.
             </h3>
             <p className="mt-6 text-gray-500 max-w-2xl text-lg">
@@ -252,52 +261,74 @@ export default function HomeModern() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {programs.map((program) => (
-              <div key={program.id} className="group bg-white border border-gray-100 p-8 rounded-[2rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-200 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
-                <div className="mb-4">
-                   <div className="flex items-center justify-between mb-4">
-                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primaryColor} bg-red-900/5`}>
-                        {program.program_code?.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
-                        {program.program_code?.includes('BACK') && <Database className="w-5 h-5" />}
-                        {program.program_code?.includes('UIUX') && <PenTool className="w-5 h-5" />}
-                        {program.program_code?.includes('BA') && <Briefcase className="w-5 h-5" />}
-                        {program.program_code?.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
-                     </div>
-                     <span className="text-[10px] font-bold uppercase tracking-widest text-red-900/60 bg-red-50 px-2 py-1 rounded-md">{program.program_code}</span>
-                   </div>
-                   <h4 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{program.program_name}</h4>
-                   <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
-                     {program.description}
-                   </p>
-                </div>
+            {programs.map((program) => {
+              // Mapping program_code ke file gambar di /public
+              const getProgramImage = (code) => {
+                if (!code) return null;
+                if (code.includes('FRONT')) return '/FE.jpg';
+                if (code.includes('BACK')) return '/BE.webp';
+                if (code.includes('UIUX')) return '/DESAIN.jpg';
+                if (code.includes('BA')) return '/BA.jpg';
+                if (code.includes('QA')) return '/QA.webp';
+                return null;
+              };
+              const programImage = getProgramImage(program.program_code);
 
-                <div className="space-y-3 mb-8 mt-2">
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <Calendar className="w-4 h-4 text-red-900" />
-                    <span>{currentPeriod?.registration_start && currentPeriod?.registration_end
-                      ? `${new Date(currentPeriod.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(currentPeriod.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                      : `${new Date(program.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(program.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <Users className="w-4 h-4 text-red-900" />
-                    <span>Kuota: {program.quota} Peserta</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <MapPin className="w-4 h-4 text-red-900" />
-                    <span>Tangerang & Semarang</span>
-                  </div>
-                </div>
+              return (
+                <div key={program.id} className="group bg-white border border-gray-100 rounded-[2rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-gray-200 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
+                  {/* Gambar Program */}
+                  {programImage && (
+                    <div className="relative h-44 w-full overflow-hidden rounded-t-[2rem]">
+                      <img
+                        src={programImage}
+                        alt={program.program_name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Overlay gradient bawah */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      {/* Badge program code di atas gambar */}
+                      <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-widest text-white bg-red-900/80 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow">
+                        {program.program_code}
+                      </span>
+                    </div>
+                  )}
 
-                <div className="mt-auto flex gap-3">
-                   <button onClick={() => openModal(program)} className={`flex-1 py-2.5 rounded-xl border border-red-900 text-red-900 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center`}>
-                      Lihat Detail
-                   </button>
-                   <button disabled={periodStatus !== 'open'} onClick={() => navigate('/register', { state: { programCode: program.program_code } })} className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center transition-colors ${periodStatus === 'open' ? 'bg-red-900 text-white hover:bg-red-950' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                      Daftar
-                   </button>
+                  <div className="p-8 flex flex-col flex-1">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primaryColor} bg-red-900/5`}>
+                          {program.program_code?.includes('FRONT') && <LayoutTemplate className="w-5 h-5" />}
+                          {program.program_code?.includes('BACK') && <Database className="w-5 h-5" />}
+                          {program.program_code?.includes('UIUX') && <PenTool className="w-5 h-5" />}
+                          {program.program_code?.includes('BA') && <Briefcase className="w-5 h-5" />}
+                          {program.program_code?.includes('QA') && <CheckCircle2 className="w-5 h-5" />}
+                        </div>
+                        {!programImage && (
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-red-900/60 bg-red-50 px-2 py-1 rounded-md">{program.program_code}</span>
+                        )}
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{program.program_name}</h4>
+                      <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
+                        {program.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 mb-8 mt-2">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <MapPin className="w-4 h-4 text-red-900" />
+                        <span>Tangerang &amp; Semarang</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto flex gap-3">
+                      <button onClick={() => openModal(program)} className={`flex-1 py-2.5 rounded-xl border border-red-900 text-red-900 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center`}>
+                        Lihat Detail
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -308,7 +339,7 @@ export default function HomeModern() {
           <div className="mb-16">
             <h2 className={`text-[11px] font-bold ${primaryColor} tracking-widest uppercase mb-4`}>— MENGAPA MEMILIH KAMI</h2>
             <h3 className="text-4xl md:text-5xl font-bold text-[#111827] tracking-tight max-w-2xl leading-[1.1]">
-              Lebih dari sekadar magang. <br/> Ini langkah pertamamu ke industri.
+              Lebih dari sekadar magang. <br /> Ini langkah pertamamu ke industri.
             </h3>
             <p className="mt-4 text-gray-500 max-w-xl text-lg">
               Kami merancang program magang ini agar kamu mendapatkan ilmu praktis, bukan sekadar teori.
@@ -316,33 +347,33 @@ export default function HomeModern() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
-                   <Briefcase className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-gray-900 text-lg mb-3">Terlibat di Real Project</h4>
-                <p className="text-gray-600 leading-relaxed text-sm">
-                  Tinggalkan simulasi kampus. Di sini kamu akan ikut membangun fitur yang benar-benar digunakan oleh pengguna aktif (production level).
-                </p>
-             </div>
-             <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
-                   <Users className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-gray-900 text-lg mb-3">Dedicated Mentor</h4>
-                <p className="text-gray-600 leading-relaxed text-sm">
-                  Kamu tidak akan dibiarkan kebingungan sendiri. Engineer senior kami siap menjadi mentormu, memberikan review, dan membagikan best practices industri.
-                </p>
-             </div>
-             <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
-                   <Building2 className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-gray-900 text-lg mb-3">Office Nyaman & Modern</h4>
-                <p className="text-gray-600 leading-relaxed text-sm">
-                  Fasilitas kantor didesain senyaman mungkin untuk mendukung kolaborasi. Kami berupaya membangun lingkungan kerja yang fun tapi tetap profesional.
-                </p>
-             </div>
+            <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+              <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
+                <Briefcase className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-gray-900 text-lg mb-3">Terlibat di Real Project</h4>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                Tinggalkan simulasi kampus. Di sini kamu akan ikut membangun fitur yang benar-benar digunakan oleh pengguna aktif (production level).
+              </p>
+            </div>
+            <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+              <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
+                <Users className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-gray-900 text-lg mb-3">Dedicated Mentor</h4>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                Kamu tidak akan dibiarkan kebingungan sendiri. Engineer senior kami siap menjadi mentormu, memberikan review, dan membagikan best practices industri.
+              </p>
+            </div>
+            <div className="bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+              <div className={`w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${primaryColor} mb-6 shadow-sm`}>
+                <Building2 className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-gray-900 text-lg mb-3">Office Nyaman & Modern</h4>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                Fasilitas kantor didesain senyaman mungkin untuk mendukung kolaborasi. Kami berupaya membangun lingkungan kerja yang fun tapi tetap profesional.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -358,40 +389,40 @@ export default function HomeModern() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-5xl mx-auto relative">
-             {/* Connecting Line for Desktop */}
-             <div className="hidden md:block absolute top-7 left-[12%] right-[12%] h-[1.5px] bg-red-100 rounded-full"></div>
-             
-             <div className="relative text-center group">
-                <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
-                   <div className="text-red-900 font-bold text-lg">1</div>
-                </div>
-                <h4 className="font-bold text-gray-900 text-base mb-2">Pilih Program</h4>
-                <p className="text-gray-500 text-sm leading-relaxed px-2">Pilih role magang yang sesuai dengan peminatan dan skill kamu.</p>
-             </div>
-             
-             <div className="relative text-center group">
-                <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
-                   <div className="text-red-900 font-bold text-lg">2</div>
-                </div>
-                <h4 className="font-bold text-gray-900 text-base mb-2">Isi Formulir</h4>
-                <p className="text-gray-500 text-sm leading-relaxed px-2">Buat akun, lengkapi biodata dan lampirkan portofolio/CV terbaikmu.</p>
-             </div>
-             
-             <div className="relative text-center group">
-                <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
-                   <div className="text-red-900 font-bold text-lg">3</div>
-                </div>
-                <h4 className="font-bold text-gray-900 text-base mb-2">Seleksi Berkas</h4>
-                <p className="text-gray-500 text-sm leading-relaxed px-2">Tim rekrutmen kami akan mereview kesesuaian profilmu.</p>
-             </div>
-             
-             <div className="relative text-center group">
-                <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
-                   <div className="text-red-900 font-bold text-lg">4</div>
-                </div>
-                <h4 className="font-bold text-gray-900 text-base mb-2">Pengumuman</h4>
-                <p className="text-gray-500 text-sm leading-relaxed px-2">Pantau status di portal. Jika lulus, mari mulai berkarya!</p>
-             </div>
+            {/* Connecting Line for Desktop */}
+            <div className="hidden md:block absolute top-7 left-[12%] right-[12%] h-[1.5px] bg-red-100 rounded-full"></div>
+
+            <div className="relative text-center group">
+              <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
+                <div className="text-red-900 font-bold text-lg">1</div>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base mb-2">Pilih Program</h4>
+              <p className="text-gray-500 text-sm leading-relaxed px-2">Pilih role magang yang sesuai dengan peminatan dan skill kamu.</p>
+            </div>
+
+            <div className="relative text-center group">
+              <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
+                <div className="text-red-900 font-bold text-lg">2</div>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base mb-2">Isi Formulir</h4>
+              <p className="text-gray-500 text-sm leading-relaxed px-2">Buat akun, lengkapi biodata dan lampirkan portofolio/CV terbaikmu.</p>
+            </div>
+
+            <div className="relative text-center group">
+              <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
+                <div className="text-red-900 font-bold text-lg">3</div>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base mb-2">Seleksi Berkas</h4>
+              <p className="text-gray-500 text-sm leading-relaxed px-2">Tim rekrutmen kami akan mereview kesesuaian profilmu.</p>
+            </div>
+
+            <div className="relative text-center group">
+              <div className={`w-14 h-14 mx-auto rounded-full bg-red-50 border border-red-100 shadow-sm flex items-center justify-center relative z-10 mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
+                <div className="text-red-900 font-bold text-lg">4</div>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base mb-2">Pengumuman</h4>
+              <p className="text-gray-500 text-sm leading-relaxed px-2">Pantau status di portal. Jika lulus, mari mulai berkarya!</p>
+            </div>
           </div>
         </div>
       </section>
@@ -406,20 +437,20 @@ export default function HomeModern() {
           <div className="bg-white/80 backdrop-blur-xl border border-gray-100 p-10 md:p-16 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
-                <h3 className="text-4xl md:text-5xl font-bold tracking-tight text-[#111827] mb-6">Siap memulai <br/> perjalananmu?</h3>
+                <h3 className="text-4xl md:text-5xl font-bold tracking-tight text-[#111827] mb-6">Siap memulai <br /> perjalananmu?</h3>
                 <p className="text-gray-600 text-lg mb-8 max-w-md">
                   Pilih role yang sesuai dengan minatmu. Kami bantu kamu break-down jadi scope dan timeline belajar nyata.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button 
-                    onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+                  <button
+                    onClick={() => navigate('/register')}
                     className={`px-6 py-3.5 rounded-xl ${bgPrimary} text-white font-bold text-sm ${hoverBgPrimary} transition-all shadow-md shadow-red-900/20 flex items-center justify-center gap-2`}
                   >
-                    Daftar Magang <ArrowRight className="w-4 h-4" />
+                    {periodStatus === 'open' ? 'Daftar Magang' : 'Cek Status Pendaftaran'} <ArrowRight className="w-4 h-4" />
                   </button>
-                  <a 
-                    href="https://rapiertechnology.co.id" 
-                    target="_blank" 
+                  <a
+                    href="https://rapiertechnology.co.id"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all text-center"
                   >
@@ -429,14 +460,14 @@ export default function HomeModern() {
               </div>
 
               <div className="space-y-4">
-                <a href="mailto:hello@rapiertechnology.co.id" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-2xl hover:border-red-900/30 hover:shadow-md hover:shadow-red-900/5 transition-all group">
+                <a href="mailto:hrdrapier@rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-2xl hover:border-red-900/30 hover:shadow-md hover:shadow-red-900/5 transition-all group">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-red-900/5 flex items-center justify-center text-red-900">
                       <Mail className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-0.5 uppercase">Email</div>
-                      <div className={`font-bold text-gray-900 group-hover:${primaryColor} transition-colors`}>contact@rapier.co.id</div>
+                      <div className={`font-bold text-gray-900 group-hover:${primaryColor} transition-colors`}>hrdrapier@rapiertechnology.co.id</div>
                     </div>
                   </div>
                   <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-red-900 group-hover:translate-x-1 transition-all" />
@@ -445,7 +476,7 @@ export default function HomeModern() {
                 <a href="https://wa.me/6281297770484" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-2xl hover:border-red-900/30 hover:shadow-md hover:shadow-red-900/5 transition-all group">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-red-900/5 flex items-center justify-center text-red-900">
-                       <SocialIcon network="whatsapp" bgColor="transparent" fgColor="currentColor" style={{ height: 24, width: 24, margin: 0 }} />
+                      <SocialIcon network="whatsapp" bgColor="transparent" fgColor="currentColor" style={{ height: 24, width: 24, margin: 0 }} />
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-0.5 uppercase">Whatsapp</div>
@@ -465,59 +496,59 @@ export default function HomeModern() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 md:col-span-1">
-               <div className="flex items-center gap-3 mb-4">
-                 <img src="/logo rapier.jpg" alt="Rapier Logo" className="h-7 rounded-md" />
-                 <span className="font-bold tracking-tight text-gray-900">
-                   Portal Magang
-                 </span>
-               </div>
-               <p className="text-sm text-gray-500 leading-relaxed max-w-[250px]">
-                 Platform pendaftaran magang resmi Rapier Technology. Raih pengalaman nyata di industri teknologi.
-               </p>
-               <div className="flex gap-2 mt-6">
-                  <SocialIcon network="linkedin" url="https://linkedin.com/company/rapitechindonesia" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
-                  <SocialIcon network="instagram" url="https://instagram.com/rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
-                  <SocialIcon network="tiktok" url="https://www.tiktok.com/@rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
-                  <SocialIcon network="youtube" url="https://www.youtube.com/@rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
-               </div>
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/logo rapier.jpg" alt="Rapier Logo" className="h-7 rounded-md" />
+                <span className="font-bold tracking-tight text-gray-900">
+                  Portal Magang
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-[250px]">
+                Platform pendaftaran magang resmi Rapier Technology. Raih pengalaman nyata di industri teknologi.
+              </p>
+              <div className="flex gap-2 mt-6">
+                <SocialIcon network="linkedin" url="https://linkedin.com/company/rapitechindonesia" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
+                <SocialIcon network="instagram" url="https://instagram.com/rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
+                <SocialIcon network="tiktok" url="https://www.tiktok.com/@rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
+                <SocialIcon network="youtube" url="https://www.youtube.com/@rapiertechnology" bgColor="transparent" fgColor="#9ca3af" style={{ height: 32, width: 32 }} target="_blank" className="hover:!bg-gray-50 rounded-md transition-colors" />
+              </div>
             </div>
 
             <div>
-               <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">PROGRAM MAGANG</h4>
-               <ul className="space-y-3">
-                  {programs.map((program) => (
-                    <li key={program.id}>
-                      <button
-                        onClick={() => {
-                          document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
-                          setTimeout(() => openModal(program), 600);
-                        }}
-                        className={`text-sm text-gray-600 hover:text-red-900 transition-colors text-left`}
-                      >
-                        {program.program_name}
-                      </button>
-                    </li>
-                  ))}
-               </ul>
+              <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">PROGRAM MAGANG</h4>
+              <ul className="space-y-3">
+                {programs.map((program) => (
+                  <li key={program.id}>
+                    <button
+                      onClick={() => {
+                        document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
+                        setTimeout(() => openModal(program), 600);
+                      }}
+                      className={`text-sm text-gray-600 hover:text-red-900 transition-colors text-left`}
+                    >
+                      {program.program_name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div>
-               <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">PERUSAHAAN</h4>
-               <ul className="space-y-3">
-                  <li><a href="https://rapiertechnology.co.id" className={`text-sm text-gray-600 hover:${primaryColor}`}>Tentang</a></li>
-                  <li><a href="#" className={`text-sm text-gray-600 hover:${primaryColor}`}>Case Studies</a></li>
-                  <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Karir Magang</a></li>
-               </ul>
+              <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">PERUSAHAAN</h4>
+              <ul className="space-y-3">
+                <li><a href="https://rapiertechnology.co.id" className={`text-sm text-gray-600 hover:${primaryColor}`}>Tentang</a></li>
+                <li><a href="#" className={`text-sm text-gray-600 hover:${primaryColor}`}>Case Studies</a></li>
+                <li><a href="#programs" className={`text-sm text-gray-600 hover:${primaryColor}`}>Karir Magang</a></li>
+              </ul>
             </div>
 
             <div>
-               <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">KONTAK</h4>
-               <ul className="space-y-3">
-                  <li><a href="mailto:contact@rapier.co.id" className={`text-sm text-gray-600 hover:${primaryColor}`}>contact@rapier.co.id</a></li>
-                  <li><span className="text-sm text-gray-600">+62 812 9777 0484</span></li>
-                  <li><a href="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Tangerang, Indonesia</a></li>
-                  <li><a href="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Semarang, Indonesia</a></li>
-               </ul>
+              <h4 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">KONTAK</h4>
+              <ul className="space-y-3">
+                <li><a href="mailto:hrdrapier@rapiertechnology.co.id" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>hrdrapier@rapiertechnology.co.id</a></li>
+                <li><span className="text-sm text-gray-600">+62 812 9777 0484</span></li>
+                <li><a href="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Tangerang, Indonesia</a></li>
+                <li><a href="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang" target="_blank" rel="noopener noreferrer" className={`text-sm text-gray-600 hover:${primaryColor}`}>📍 Semarang, Indonesia</a></li>
+              </ul>
             </div>
           </div>
         </div>
@@ -536,126 +567,126 @@ export default function HomeModern() {
             </div>
 
             <div className="p-6 md:p-8">
-               <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 mb-8">
-                  <p className="text-gray-600 leading-relaxed">{selectedProgram.description}</p>
-               </div>
+              <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 mb-8">
+                <p className="text-gray-600 leading-relaxed">{selectedProgram.description}</p>
+              </div>
 
-               <div className="mb-8">
-                  <h3 className="text-lg font-bold text-red-900 mb-3">📌 Rincian Penugasan/Tanggung Jawab</h3>
-                  <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
-                    {selectedProgram.program_code?.includes('FRONT') && (
-                      <>
-                        <li>Membangun komponen UI menggunakan React.js dan Tailwind CSS</li>
-                        <li>Mengintegrasikan frontend dengan REST API</li>
-                        <li>Memastikan tampilan responsif di berbagai device</li>
-                        <li>Berkolaborasi dengan tim backend dan desainer</li>
-                        <li>Melakukan debugging dan optimasi performa</li>
-                      </>
-                    )}
-                    {selectedProgram.program_code?.includes('BACK') && (
-                      <>
-                        <li>Mengembangkan REST API menggunakan Node.js dan Express</li>
-                        <li>Merancang dan mengoptimalkan database SQL</li>
-                        <li>Mengimplementasikan autentikasi dan keamanan</li>
-                        <li>Melakukan unit testing dan debugging</li>
-                        <li>Dokumentasi API</li>
-                      </>
-                    )}
-                    {selectedProgram.program_code?.includes('UIUX') && (
-                      <>
-                        <li>Melakukan user research dan analisis kebutuhan</li>
-                        <li>Membuat wireframe, mockup, dan prototype di Figma</li>
-                        <li>Mendesain user interface yang intuitif dan menarik</li>
-                        <li>Berkolaborasi dengan developer untuk implementasi desain</li>
-                        <li>Melakukan usability testing</li>
-                      </>
-                    )}
-                    {selectedProgram.program_code?.includes('BA') && (
-                      <>
-                        <li>Mengumpulkan dan menganalisis kebutuhan bisnis</li>
-                        <li>Membuat dokumentasi BRD dan FRD</li>
-                        <li>Menjadi jembatan antara klien dan tim teknis</li>
-                        <li>Memvalidasi solusi yang dikembangkan</li>
-                        <li>Membantu dalam proses testing UAT</li>
-                      </>
-                    )}
-                    {selectedProgram.program_code?.includes('QA') && (
-                      <>
-                        <li>Membuat test plan dan test case</li>
-                        <li>Melakukan manual testing dan regression testing</li>
-                        <li>Melaporkan bug dan memastikan perbaikan</li>
-                        <li>Mengimplementasikan automation testing sederhana</li>
-                        <li>Memastikan kualitas produk sebelum rilis</li>
-                      </>
-                    )}
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-red-900 mb-3">📌 Rincian Penugasan/Tanggung Jawab</h3>
+                <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
+                  {selectedProgram.program_code?.includes('FRONT') && (
+                    <>
+                      <li>Membangun komponen UI menggunakan React.js dan Tailwind CSS</li>
+                      <li>Mengintegrasikan frontend dengan REST API</li>
+                      <li>Memastikan tampilan responsif di berbagai device</li>
+                      <li>Berkolaborasi dengan tim backend dan desainer</li>
+                      <li>Melakukan debugging dan optimasi performa</li>
+                    </>
+                  )}
+                  {selectedProgram.program_code?.includes('BACK') && (
+                    <>
+                      <li>Mengembangkan REST API menggunakan Node.js dan Express</li>
+                      <li>Merancang dan mengoptimalkan database SQL</li>
+                      <li>Mengimplementasikan autentikasi dan keamanan</li>
+                      <li>Melakukan unit testing dan debugging</li>
+                      <li>Dokumentasi API</li>
+                    </>
+                  )}
+                  {selectedProgram.program_code?.includes('UIUX') && (
+                    <>
+                      <li>Melakukan user research dan analisis kebutuhan</li>
+                      <li>Membuat wireframe, mockup, dan prototype di Figma</li>
+                      <li>Mendesain user interface yang intuitif dan menarik</li>
+                      <li>Berkolaborasi dengan developer untuk implementasi desain</li>
+                      <li>Melakukan usability testing</li>
+                    </>
+                  )}
+                  {selectedProgram.program_code?.includes('BA') && (
+                    <>
+                      <li>Mengumpulkan dan menganalisis kebutuhan bisnis</li>
+                      <li>Membuat dokumentasi BRD dan FRD</li>
+                      <li>Menjadi jembatan antara klien dan tim teknis</li>
+                      <li>Memvalidasi solusi yang dikembangkan</li>
+                      <li>Membantu dalam proses testing UAT</li>
+                    </>
+                  )}
+                  {selectedProgram.program_code?.includes('QA') && (
+                    <>
+                      <li>Membuat test plan dan test case</li>
+                      <li>Melakukan manual testing dan regression testing</li>
+                      <li>Melaporkan bug dan memastikan perbaikan</li>
+                      <li>Mengimplementasikan automation testing sederhana</li>
+                      <li>Memastikan kualitas produk sebelum rilis</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h3 className="text-lg font-bold text-red-900 mb-4">💻 Kompetensi Teknis</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProgram.program_code?.includes('FRONT') && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-green-50 text-green-700 border border-green-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                    {selectedProgram.program_code?.includes('BACK') && ['Node.js', 'Express.js', 'PostgreSQL', 'REST API', 'Git', 'JWT'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                    {selectedProgram.program_code?.includes('UIUX') && ['Figma', 'Adobe XD', 'Wireframing', 'Prototyping', 'User Research'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                    {selectedProgram.program_code?.includes('BA') && ['BRD/FRD', 'UML', 'BPMN', 'Analytical Thinking', 'Excel'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                    {selectedProgram.program_code?.includes('QA') && ['Manual Testing', 'Test Case', 'Bug Reporting', 'Selenium', 'Postman'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-red-50 text-red-700 border border-red-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-red-900 mb-4">🤝 Soft Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {['Komunikasi', 'Kerja Tim', 'Pemecahan Masalah', 'Manajemen Waktu', 'Adaptif'].map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-50 text-gray-700 border border-gray-100 rounded-md text-xs font-medium">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <MapPin className={`w-4 h-4 ${primaryColor}`} /> Lokasi Penempatan
+                  </h3>
+                  <div className="space-y-3">
+                    <a href="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                      <span className="text-gray-400 mt-0.5">📍</span>
+                      <div>
+                        <div className="font-semibold text-gray-900 text-sm">Tangerang</div>
+                        <div className="text-xs text-gray-500">JL. Iskandar Muda No.8, Neglasari</div>
+                      </div>
+                    </a>
+                    <a href="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                      <span className="text-gray-400 mt-0.5">📍</span>
+                      <div>
+                        <div className="font-semibold text-gray-900 text-sm">Semarang</div>
+                        <div className="text-xs text-gray-500">JL. Mulawarman Selatan Raya No.16</div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">⚠️ Persyaratan Khusus</h3>
+                  <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-600">
+                    <li>Mahasiswa aktif semester 4 atau lebih</li>
+                    <li>Memiliki laptop pribadi</li>
+                    <li>Kesiapan untuk belajar secara mandiri</li>
+                    <li>Komitmen waktu minimal 3 bulan</li>
+                    <li>Bersedia mengikuti prosedur dan aturan</li>
                   </ul>
-               </div>
-
-               <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  <div>
-                    <h3 className="text-lg font-bold text-red-900 mb-4">💻 Kompetensi Teknis</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProgram.program_code?.includes('FRONT') && ['React.js', 'Tailwind CSS', 'JavaScript', 'REST API', 'Git'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-green-50 text-green-700 border border-green-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                      {selectedProgram.program_code?.includes('BACK') && ['Node.js', 'Express.js', 'PostgreSQL', 'REST API', 'Git', 'JWT'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                      {selectedProgram.program_code?.includes('UIUX') && ['Figma', 'Adobe XD', 'Wireframing', 'Prototyping', 'User Research'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                      {selectedProgram.program_code?.includes('BA') && ['BRD/FRD', 'UML', 'BPMN', 'Analytical Thinking', 'Excel'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                      {selectedProgram.program_code?.includes('QA') && ['Manual Testing', 'Test Case', 'Bug Reporting', 'Selenium', 'Postman'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-red-50 text-red-700 border border-red-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-red-900 mb-4">🤝 Soft Skills</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {['Komunikasi', 'Kerja Tim', 'Pemecahan Masalah', 'Manajemen Waktu', 'Adaptif'].map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-50 text-gray-700 border border-gray-100 rounded-md text-xs font-medium">{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-               </div>
-
-               <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                       <MapPin className={`w-4 h-4 ${primaryColor}`} /> Lokasi Penempatan
-                    </h3>
-                    <div className="space-y-3">
-                       <a href="https://maps.google.com/maps?q=JL.+Iskandar+Muda+No.8,+Neglasari,+Kec.+Neglasari,+Kota+Tangerang" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                          <span className="text-gray-400 mt-0.5">📍</span>
-                          <div>
-                             <div className="font-semibold text-gray-900 text-sm">Tangerang</div>
-                             <div className="text-xs text-gray-500">JL. Iskandar Muda No.8, Neglasari</div>
-                          </div>
-                       </a>
-                       <a href="https://maps.google.com/maps?q=JL.+Mulawarman+Selatan+Raya+No.16,+Kramas,+Kec.+Tembalang,+Kota+Semarang" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                          <span className="text-gray-400 mt-0.5">📍</span>
-                          <div>
-                             <div className="font-semibold text-gray-900 text-sm">Semarang</div>
-                             <div className="text-xs text-gray-500">JL. Mulawarman Selatan Raya No.16</div>
-                          </div>
-                       </a>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-3">⚠️ Persyaratan Khusus</h3>
-                    <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-600">
-                      <li>Mahasiswa aktif semester 6 atau lebih</li>
-                      <li>Memiliki laptop pribadi</li>
-                      <li>Kesiapan untuk belajar secara mandiri</li>
-                      <li>Komitmen waktu minimal 3 bulan</li>
-                      <li>Bersedia mengikuti prosedur dan aturan</li>
-                    </ul>
-                  </div>
-               </div>
+                </div>
+              </div>
 
               <div className="flex gap-4 pt-6 border-t border-gray-100">
                 <button
@@ -669,7 +700,7 @@ export default function HomeModern() {
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
                 >
-                  {periodStatus === 'open' ? 'Daftar Sekarang' : 'Pendaftaran Ditutup'} <ArrowRight className="w-4 h-4" />
+                  {periodStatus === 'open' ? 'Daftar Sekarang' : 'Pendaftaran Ditutup'} {periodStatus === 'open' && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
             </div>

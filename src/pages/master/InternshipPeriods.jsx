@@ -15,12 +15,14 @@ import * as z from "zod";
 const schema = z.object({
   period_code: z.string().min(1, "Kode periode wajib diisi"),
   period_name: z.string().min(1, "Nama periode wajib diisi"),
+  batch: z.coerce.number().min(1, "Batch minimal 1").max(50).optional(),
   year: z.coerce.number().min(2000, "Tahun tidak valid"),
   semester: z.enum(["ganjil", "genap"]),
   registration_start: z.string().min(1, "Tanggal mulai pendaftaran wajib diisi"),
   registration_end: z.string().min(1, "Tanggal selesai pendaftaran wajib diisi"),
   program_start: z.string().min(1, "Tanggal mulai program wajib diisi"),
   program_end: z.string().min(1, "Tanggal selesai program wajib diisi"),
+  announcement_date: z.string().optional().nullable(),
   quota_total: z.coerce.number().min(0, "Kuota tidak boleh negatif"),
   is_active: z.boolean().default(true),
   registration_status: z.enum(["open", "closed", "announced"]).default("open"),
@@ -34,6 +36,7 @@ export default function InternshipPeriods() {
     mutationFn: ({ id, is_active }) => api.patch(`/master/internship-periods/${id}/active-status`, { is_active }),
     onSuccess: () => {
       queryClient.invalidateQueries(["internship-periods"]);
+      queryClient.invalidateQueries(["internship-programs"]);
       toast.success("Status periode berhasil diperbarui");
     },
     onError: (err) => {
@@ -64,12 +67,14 @@ export default function InternshipPeriods() {
     reset({
       period_code: "",
       period_name: "",
+      batch: 1,
       year: new Date().getFullYear(),
       semester: "ganjil",
       registration_start: "",
       registration_end: "",
       program_start: "",
       program_end: "",
+      announcement_date: "",
       quota_total: 0,
       is_active: true,
       registration_status: "open",
@@ -82,12 +87,14 @@ export default function InternshipPeriods() {
     reset({
       period_code: item.period_code,
       period_name: item.period_name,
+      batch: item.batch || 1,
       year: item.year,
       semester: item.semester,
       registration_start: item.registration_start?.split("T")[0],
       registration_end: item.registration_end?.split("T")[0],
       program_start: item.program_start?.split("T")[0],
       program_end: item.program_end?.split("T")[0],
+      announcement_date: item.announcement_date ? item.announcement_date.split("T")[0] : "",
       quota_total: item.quota_total,
       is_active: item.is_active,
       registration_status: item.registration_status || "open",
@@ -97,15 +104,31 @@ export default function InternshipPeriods() {
 
   const onSubmit = (formData) => {
     if (selectedItem) {
-      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { onSuccess: () => setIsModalOpen(false) });
+      updateMutation.mutate({ id: selectedItem.id, updatedData: formData }, { 
+        onSuccess: () => {
+          setIsModalOpen(false);
+          queryClient.invalidateQueries(["internship-programs"]);
+        }
+      });
     } else {
-      createMutation.mutate(formData, { onSuccess: () => setIsModalOpen(false) });
+      createMutation.mutate(formData, { 
+        onSuccess: () => {
+          setIsModalOpen(false);
+          queryClient.invalidateQueries(["internship-programs"]);
+        }
+      });
     }
   };
 
   const columns = [
     { header: "Kode", accessorKey: "period_code", className: "font-mono text-xs" },
     { header: "Nama Periode", accessorKey: "period_name", className: "font-semibold" },
+    {
+      header: "Batch",
+      accessorKey: "batch",
+      className: "text-center",
+      cell: (row) => <span className="font-bold">Batch {row.batch || "-"}</span>
+    },
     {
       header: "Rentang Program",
       cell: (row) => (
@@ -245,14 +268,25 @@ export default function InternshipPeriods() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Periode</label>
-              <input
-                {...register("period_name")}
-                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-                placeholder="Contoh: Magang Batch 1 2024"
-              />
-              {errors.period_name && <p className="text-xs text-destructive">{errors.period_name.message}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nama Periode</label>
+                <input
+                  {...register("period_name")}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  placeholder="Contoh: Magang Batch 1 2024"
+                />
+                {errors.period_name && <p className="text-xs text-destructive">{errors.period_name.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batch</label>
+                <select {...register("batch")} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((b) => (
+                    <option key={b} value={b}>Batch {b}</option>
+                  ))}
+                </select>
+                {errors.batch && <p className="text-xs text-destructive">{errors.batch.message}</p>}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -327,6 +361,15 @@ export default function InternshipPeriods() {
                 </div>
               </div>
               {(errors.program_start || errors.program_end) && <p className="text-xs text-destructive">Jadwal program wajib diisi</p>}
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-4 mt-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600">Jadwal Pengumuman</h4>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-amber-700">Tanggal Pengumuman (Opsional)</label>
+                <input type="date" {...register("announcement_date")} className="flex h-10 w-full rounded-lg border border-amber-500/20 bg-background px-3 text-sm" />
+                <p className="text-[10px] text-amber-600/70 mt-1">Jika diisi, status pendaftaran di halaman utama akan otomatis berubah menjadi "Tutup" setelah masa pendaftaran lewat, dan menampilkan teks jadwal pengumuman.</p>
+              </div>
             </div>
           </div>
         </div>

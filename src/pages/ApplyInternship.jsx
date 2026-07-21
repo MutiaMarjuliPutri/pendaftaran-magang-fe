@@ -30,6 +30,20 @@ export default function ApplyInternship() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+  useEffect(() => {
+    if (formData.start_month && formData.duration) {
+      const startIndex = months.indexOf(formData.start_month);
+      const duration = parseInt(formData.duration) || 0;
+      
+      if (startIndex !== -1 && duration > 0) {
+        const endIndex = (startIndex + duration - 1) % 12;
+        setFormData(prev => ({ ...prev, end_month: months[endIndex] }));
+      }
+    }
+  }, [formData.start_month, formData.duration]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -157,7 +171,7 @@ export default function ApplyInternship() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Semester</label>
-                    <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="14" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none" placeholder="1-14" />
+                    <input type="number" name="semester" value={formData.semester} onChange={handleChange} required min="1" max="10" className="w-full h-12 rounded-xl border border-input px-4 focus:ring-2 focus:ring-red-900/20 outline-none" placeholder="" />
                   </div>
                 </div>
               </div>
@@ -197,16 +211,16 @@ export default function ApplyInternship() {
                     <label className="text-sm font-medium">Dari Bulan</label>
                     <select name="start_month" value={formData.start_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
                       <option value="">Pilih Bulan Mulai</option>
-                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                      {months.map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Sampai Bulan</label>
-                    <select name="end_month" value={formData.end_month} onChange={handleChange} required className="w-full h-12 rounded-xl border border-input px-4 bg-background outline-none transition-all">
+                    <select name="end_month" value={formData.end_month} onChange={handleChange} required disabled className="w-full h-12 rounded-xl border border-input px-4 bg-muted/50 cursor-not-allowed outline-none transition-all">
                       <option value="">Pilih Bulan Selesai</option>
-                      {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(m => (
+                      {months.map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
@@ -243,8 +257,8 @@ export default function ApplyInternship() {
               </div>
             </section>
 
-            <button type="submit" disabled={uploading} className="w-full h-14 bg-red-900 text-white rounded-2xl font-bold shadow-xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-lg">
-              {uploading ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+            <button type="submit" disabled={uploading} className="w-full h-12 md:h-14 bg-red-900 text-white rounded-2xl font-bold shadow-xl shadow-red-900/20 hover:bg-red-950 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-base md:text-lg">
+              {uploading ? <Loader2 className="animate-spin" /> : <Send size={18} className="md:w-5 md:h-5" />}
               {uploading ? 'Sedang memproses...' : 'Kirim Lamaran Sekarang'}
             </button>
           </form>
