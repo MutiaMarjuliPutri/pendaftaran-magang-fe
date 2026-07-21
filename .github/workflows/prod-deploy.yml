@@ -1,0 +1,24 @@
+name: Deploy Production
+on:
+  push:
+    branches:
+      - production
+
+env:
+  CI: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Building a big long strong tower
+        run: npm run build
+      - name: Deploying built files
+        run: npm run deploy -- -n PROD-pendaftaran-magang -p dist/ -c "SoohF5cQDBxYbvzhNiRT:jli76uAA6XUIIwcbOBfdpsVgtDGuqshqeALE0pCQ47NZKmyPq5" -rid apsoutheast1
